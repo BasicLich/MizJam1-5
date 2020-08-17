@@ -4,12 +4,12 @@ using Microsoft.Xna.Framework.Input;
 
 namespace MizJam1
 {
-    public class Game1 : Game
+    public class MizJam1Game : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        public Game1()
+        public MizJam1Game()
         {
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";

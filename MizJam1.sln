@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30406.217
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MizJam1", "MizJam1.csproj", "{14D8C8A5-12EF-4A19-BC04-C92C66E738E4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MizJam1", "MizJam1.csproj", "{AF6861F3-B356-4E7F-ACBD-43ACDC205F83}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{14D8C8A5-12EF-4A19-BC04-C92C66E738E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{14D8C8A5-12EF-4A19-BC04-C92C66E738E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{14D8C8A5-12EF-4A19-BC04-C92C66E738E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{14D8C8A5-12EF-4A19-BC04-C92C66E738E4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AF6861F3-B356-4E7F-ACBD-43ACDC205F83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AF6861F3-B356-4E7F-ACBD-43ACDC205F83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AF6861F3-B356-4E7F-ACBD-43ACDC205F83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AF6861F3-B356-4E7F-ACBD-43ACDC205F83}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {3455C1F6-C869-4E5A-B15D-23A90C0E2F44}
+		SolutionGuid = {0C792D7D-F20E-4A76-9A39-7E9A32F98FD2}
 	EndGlobalSection
 EndGlobal
