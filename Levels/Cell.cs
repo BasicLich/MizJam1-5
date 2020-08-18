@@ -9,7 +9,7 @@ namespace MizJam1.Levels
         const uint FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
         const uint FLIPPED_VERTICALLY_FLAG = 0x40000000;
         const uint FLIPPED_DIAGONALLY_FLAG = 0x20000000;
-        private const float ROTATION_RADIANS = (float)(90 * Math.PI / 180);
+        const float ROTATION_RADIANS = (float)(90 * Math.PI / 180);
 
         public Cell(uint id)
         {
@@ -17,14 +17,6 @@ namespace MizJam1.Levels
             FlippedHorizontally = (id & FLIPPED_HORIZONTALLY_FLAG) != 0;
             FlippedVertically = (id & FLIPPED_VERTICALLY_FLAG) != 0;
             FlippedDiagonally = (id & FLIPPED_DIAGONALLY_FLAG) != 0;
-        }
-
-        public Cell(uint id, bool flippedDiagonally, bool flippedHorizontally, bool flippedVertically)
-        {
-            ID = id;
-            FlippedDiagonally = flippedDiagonally;
-            FlippedHorizontally = flippedHorizontally;
-            FlippedVertically = flippedVertically;
         }
 
         public uint ID { get; set; }

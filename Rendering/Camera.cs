@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 
-namespace MizJam1
+namespace MizJam1.Rendering
 {
     /// <summary>
     /// Thanks to RogueSharp
