@@ -1,5 +1,4 @@
 ﻿using Microsoft.Xna.Framework;
-
 namespace MizJam1.Rendering
 {
     /// <summary>
@@ -16,8 +15,19 @@ namespace MizJam1.Rendering
 
         // Centered Position of the Camera in pixels.
         public Vector2 Position { get; set; }
+        private float zoom;
         // Current Zoom level with 1.0f being standard
-        public float Zoom { get; set; }
+        public float Zoom
+        {
+            get => zoom;
+            set
+            {
+                if (value < 1f) zoom = 1f;
+                else if (value > 8f) zoom = 8f;
+                else zoom = value;
+                MoveCamera(Vector2.Zero, true);
+            }
+        }
         // Current Rotation amount with 0.0f being standard orientation
         public float Rotation { get; set; }
 
@@ -31,7 +41,7 @@ namespace MizJam1.Rendering
         {
             get
             {
-                return new Vector2(ViewportWidth * 0.5f, ViewportHeight * 0.5f);
+                return new Vector2(ViewportWidth / 2, ViewportHeight / 2);
             }
         }
 
@@ -47,7 +57,7 @@ namespace MizJam1.Rendering
                    -(int)Position.Y, 0) *
                    Matrix.CreateRotationZ(Rotation) *
                    Matrix.CreateScale(new Vector3(Zoom, Zoom, 1)) *
-                   Matrix.CreateTranslation(new Vector3(ViewportCenter, 0));
+                   Matrix.CreateTranslation(new Vector3(ViewportCenter + new Vector2(420, 0), 0));
             }
         }
 
@@ -68,7 +78,7 @@ namespace MizJam1.Rendering
             }
         }
 
-        public Rectangle ViewportWorldBoundry()
+        public Rectangle ViewportWorldBoundary()
         {
             Vector2 viewPortCorner = ScreenToWorld(new Vector2(0, 0));
             Vector2 viewPortBottomCorner =
@@ -93,10 +103,13 @@ namespace MizJam1.Rendering
                 (ViewportWidth / Zoom / 2),
                 Global.MapHeight * Global.SpriteHeight -
                 (ViewportHeight / Zoom / 2));
-
-            return Vector2.Clamp(position,
-               new Vector2(ViewportWidth / Zoom / 2, ViewportHeight / Zoom / 2),
+            cameraMax.Floor();
+            var cameraMin = new Vector2(ViewportWidth / Zoom / 2, ViewportHeight / Zoom / 2);
+            cameraMin.Ceiling();
+            Vector2 res = Vector2.Clamp(position,
+               cameraMin,
                cameraMax);
+            return res;
         }
 
         public Vector2 WorldToScreen(Vector2 worldPosition)

@@ -1,10 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MizJam1.Inputs;
 using MizJam1.Levels;
 using MizJam1.Rendering;
 using MizJam1.UIComponents;
 using MizJam1.UIComponents.Commands;
+using MizJam1.Units;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
@@ -31,7 +33,9 @@ namespace MizJam1
         private SpriteFont mainFont;
         private SpriteFont mizjamFont;
         private Texture2D[] textures;
+        private Texture2D windowBorder;
         private Level[] levels;
+        private Level currentLevel;
         private UIContainer mainMenu;
 
         public MizJam1Game()
@@ -49,13 +53,24 @@ namespace MizJam1
         {
             camera = new Camera
             {
+                ViewportHeight = 1080,
+                ViewportWidth = 1080,
                 Zoom = 3f
             };
 
             GameState = GameStates.MainMenu;
 
+            Window.AllowUserResizing = true;
+            Window.Title = "MizJam1 Game";
+
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
+            if (GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width == 1920 && GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height == 1080)
+            {
+                Window.IsBorderless = true;
+                Window.Position = Point.Zero;
+            }
+
             graphics.ApplyChanges();
 
             base.Initialize();
@@ -72,8 +87,7 @@ namespace MizJam1
             textures[1] = Content.Load<Texture2D>("colored_transparent_packed");
             textures[2] = Content.Load<Texture2D>("monochrome_packed");
             textures[3] = Content.Load<Texture2D>("monochrome_transparent_packed");
-
-
+            windowBorder = Content.Load<Texture2D>("Textures/WindowBorder");
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -82,7 +96,7 @@ namespace MizJam1
                 XDocument levelDoc = XDocument.Parse(File.ReadAllText(levelFiles[i]));
                 levels[i] = new Level(levelDoc);
             }
-
+            currentLevel = levels[0];
 
             mainMenu = new UIContainer(Point.Zero, new Point(1920, 1080), true);
             UIMenu menu = new UIMenu(Point.Zero, new Point(1000, 600), true);
@@ -104,15 +118,16 @@ namespace MizJam1
 
         protected override void Update(GameTime gameTime)
         {
+            MouseAdapter.Update(gameTime);
+
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 GameState = GameStates.MainMenu;
 
             if (GameState == GameStates.MainMenu)
             {
-                MouseState mouseState = Mouse.GetState();
                 foreach (var child in ((UIMenu)mainMenu.Child).Children)
                 {
-                    if (child.Contains(mouseState.Position))
+                    if (child.Contains(MouseAdapter.Position))
                     {
                         child.Select();
                     }
@@ -122,15 +137,18 @@ namespace MizJam1
                     }
                 }
 
-                if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+                if (MouseAdapter.ConsumeLeftClick)
                 {
                     mainMenu.Execute();
                 }
             }
             else
             {
-                if (Mouse.GetState().LeftButton == ButtonState.Pressed)
-                    camera.Zoom = 4f;
+                if (MouseAdapter.ScrollUp)
+                    camera.Zoom += 0.5f;
+                if (MouseAdapter.ScrollDown)
+                    camera.Zoom -= 0.5f;
+
                 if (Keyboard.GetState().IsKeyDown(Keys.Left))
                     camera.MoveCamera(new Vector2(-3, 0), true);
                 if (Keyboard.GetState().IsKeyDown(Keys.Right))
@@ -139,33 +157,51 @@ namespace MizJam1
                     camera.MoveCamera(new Vector2(0, -3), true);
                 if (Keyboard.GetState().IsKeyDown(Keys.Down))
                     camera.MoveCamera(new Vector2(0, 3), true);
+                currentLevel.MouseOver(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint());
+                if (MouseAdapter.ConsumeLeftClick)
+                {
+                    currentLevel.LeftClick(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint());
+                }
             }
+
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Global.Colors.Main3);
-            screenSpriteBatch.Begin(SpriteSortMode.BackToFront, BlendState.AlphaBlend, SamplerState.PointClamp);
+            screenSpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
             mapSpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, transformMatrix: camera.TransformationMatrix);
 
-            //Draw debug world cursor position
-            screenSpriteBatch.DrawString(mainFont, camera.ScreenToWorld(Mouse.GetState().Position.ToVector2()).ToString(), Vector2.Zero, Color.White);
             if (GameState == GameStates.MainMenu)
             {
                 mainMenu.Draw(screenSpriteBatch);
             }
             else
             {
-                levels[0].Draw(mapSpriteBatch, textures);
+                currentLevel.Draw(mapSpriteBatch, textures);
+                screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Color.Black);
+                screenSpriteBatch.Draw(windowBorder, new Rectangle(1500, 0, 420, 1080), Color.Black);
+                Unit unit = null;
+                if ((unit = currentLevel.SelectedUnit ?? currentLevel.MouseOverUnit) != null)
+                {
+                    screenSpriteBatch.DrawString(mizjamFont, string.Format("NAME: {0}\nCLASS: {1}\nALLY: {2}", unit.Name.ToUpper(), unit.UnitClass.Name.ToUpper(), unit.Enemy ? "NO" : "YES"), new Vector2(1505, 5), Global.Colors.Main1);
+                }
+                Cell cell;
+                if ((cell = currentLevel.MouseOverCell).ID != 0)
+                {
+                    CellProperties props = CellProperties.GetCellProperties(cell.ID);
+                    screenSpriteBatch.DrawString(mizjamFont, string.Format("SOLID: {0}\nDIFF: {1}", props.IsSolid ? "YES": "NO", props.Difficulty), new Vector2(5), Global.Colors.Main1);
+                }
             }
-            //Test font
-            //screenSpriteBatch.DrawString(mizjamFont, "TESTING FONT", Vector2.One * 16, new Color(0xffb8c6cf));
+
             //Dice
             //mapSpriteBatch.Draw(textures[0], new Rectangle() { X = 16, Y = 16, Height = 16, Width = 16 }, new Rectangle() { X = 672, Y = 224, Height = 16, Width = 16 }, Color.White);
 
+            //Draw debug world cursor position
+            screenSpriteBatch.DrawString(mainFont, camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToString(), Vector2.Zero, Color.White);
             //Draw cursor
-            screenSpriteBatch.Draw(textures[1], new Rectangle(Mouse.GetState().Position, new Point(32, 32)), new Rectangle(560, 160, 16, 16), Color.White);
+            screenSpriteBatch.Draw(textures[1], new Rectangle(MouseAdapter.Position, new Point(32, 32)), new Rectangle(560, 160, 16, 16), Color.White);
             base.Draw(gameTime);
             mapSpriteBatch.End();
             screenSpriteBatch.End();

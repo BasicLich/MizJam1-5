@@ -1,17 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-using static MizJam1.Unit.Stats;
+using static MizJam1.Units.Stats;
 
-namespace MizJam1.Unit
+namespace MizJam1.Units
 {
     public class UnitClass
     {
-       /* public readonly Dictionary<string, UnitClass> UnitClasses = new Dictionary<string, UnitClass>() 
+        public static readonly Dictionary<string, UnitClass> UnitClasses = new Dictionary<string, UnitClass>()
         {
-            ["Warrior"] = new UnitClass("Warrior", (Attack, Defense), new Dictionary<Stats, ushort>() {[] })
-            };*/
+            ["Warrior"] = new UnitClass("Warrior", (Attack, Defense), new Dictionary<Stats, ushort>()
+            {
+                [MaxHealth] = 10,
+                [Magic] = 0,
+                [MagicDefense] = 3,
+                [Stats.Range] = 0,
+                [Speed] = 5
+            }),
+            ["Zombie"] = new UnitClass("Zombie", (Defense, MagicDefense), new Dictionary<Stats, ushort>()
+            {
+                [MaxHealth] = 4,
+                [Attack] = 2,
+                [Magic] = 0,
+                [Stats.Range] = 0,
+                [Speed] = 3
+            })
+        };
 
 
         public UnitClass(string name, (Stats, Stats) oppositeStats, Dictionary<Stats, ushort> defaultStatsValue)

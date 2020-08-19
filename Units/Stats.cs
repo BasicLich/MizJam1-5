@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MizJam1.Unit
+namespace MizJam1.Units
 {
     public enum Stats
     {
