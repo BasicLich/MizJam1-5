@@ -12,37 +12,6 @@ namespace MizJam1.Utilities
     public static class MathExtensions
     {
         /// <summary>
-        /// Returns a subset of a <see cref="Dictionary{TKey, TValue}"/> with a <see cref="Point"/> Key. 
-        /// <para/>The subset returned will have all the keys contained in the given <paramref name="subsetBounds"/>.
-        /// <para/>Should a value not exist in the <paramref name="dictionary"/> for a given point, it will use <paramref name="defaultValue"/> instead.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="dictionary"></param>
-        /// <param name="subsetBounds"></param>
-        /// <param name="defaultValue"></param>
-        /// <returns></returns>
-        public static Dictionary<Point, T> Subset<T>(this Dictionary<Point, T> dictionary, Rectangle subsetBounds, T defaultValue = default)
-        {
-            Dictionary<Point, T> newDict = new Dictionary<Point, T>();
-
-            for (int i = subsetBounds.Left; i < subsetBounds.Right; i++)
-            {
-                for (int j = subsetBounds.Top; j < subsetBounds.Bottom; j++)
-                {
-                    if (dictionary.ContainsKey(new Point(i, j)))
-                    {
-                        newDict[new Point(i, j)] = dictionary[new Point(i, j)];
-                    }
-                    else
-                    {
-                        newDict[new Point(i, j)] = defaultValue;
-                    }
-                }
-            }
-
-            return newDict;
-        }
-        /// <summary>
         /// Multiplies all the values inside <paramref name="rectangle"/> by the given <paramref name="number"/>.
         /// </summary>
         /// <param name="rectangle"></param>

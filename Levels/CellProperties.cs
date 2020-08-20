@@ -225,7 +225,6 @@ namespace MizJam1.Levels
                 return cellProperties[(uint)(id % Global.SpriteSheetCount)];
             }
 
-
             return new CellProperties(false, 20);
         }
 

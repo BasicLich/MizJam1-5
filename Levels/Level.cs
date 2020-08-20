@@ -22,13 +22,15 @@ namespace MizJam1.Levels
             this.game = game;
             var mapData = levelData.Element("map");
 
+            Size = new Point(int.Parse(mapData.Attribute("width").Value), int.Parse(mapData.Attribute("height").Value));
+
             layers = new List<Cell[,]>();
             foreach (var layer in mapData.Elements("layer"))
             {
                 Cell[,] cells = ParseLayer(layer.Element("data").Value);
                 layers.Add(cells);
             }
-            units = new Unit[layers[0].GetLength(0), layers[0].GetLength(1)];
+            units = new Unit[Height, Width];
 
             var objectGroups = mapData.Elements("objectgroup");
             var playerGroup = objectGroups.Where(el => el.Attribute("name").Value == "Player").SingleOrDefault();
@@ -57,10 +59,13 @@ namespace MizJam1.Levels
         }
 
         public Unit SelectedUnit { get; set; }
-        public HashSet<Point> CanGoPositions { get; set; }
-        public HashSet<Point> ThreathenPositions { get; set; }
+        private HashSet<Point> canGoPositions;
+        private Dictionary<Point, ThreatenedCell> threatenedPositions;
         public Cell MouseOverCell { get; set; }
         public Unit MouseOverUnit { get; set; }
+        public Point Size { get; private set; }
+        public int Width => Size.X;
+        public int Height => Size.Y;
 
         private Cell[,] ParseLayer(string layerData)
         {
@@ -68,16 +73,16 @@ namespace MizJam1.Levels
             layerData = layerData.Replace("\r\n", "\n").Trim();
 
             string[] mapLines = layerData.Split("\n", StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < mapLines.Count(); i++)
+            for (int i = 0; i < Height; i++)
             {
                 var mapline = mapLines[i].Trim();
                 var columns = mapline.Split(",", StringSplitOptions.RemoveEmptyEntries);
                 if (cells == null)
                 {
-                    cells = new Cell[mapLines.Count(), columns.Count()];
+                    cells = new Cell[Height, Width];
                 }
 
-                for (int j = 0; j < columns.Count(); j++)
+                for (int j = 0; j < Width; j++)
                 {
                     var col = columns[j].Trim();
                     cells[i, j] = new Cell(UInt32.Parse(col));
@@ -93,7 +98,7 @@ namespace MizJam1.Levels
 
         private bool IsPositionInvalid(Point position)
         {
-            return position.X < 0 || position.Y < 0 || position.X >= layers[0].GetLength(1) || position.Y >= layers[0].GetLength(0);
+            return position.X < 0 || position.Y < 0 || position.X >= Width || position.Y >= Height;
         }
 
         private Cell GetCell(Point position)
@@ -170,7 +175,7 @@ namespace MizJam1.Levels
 
             if (!IsPositionInvalid(position))
             {
-                if (SelectedUnit != null && CanGoPositions.Contains(position) && !SelectedUnit.Enemy)
+                if (SelectedUnit != null && canGoPositions.Contains(position) && !SelectedUnit.Enemy)
                 {
                     MoveUnit(SelectedUnit.Position, position);
                     return;
@@ -179,20 +184,20 @@ namespace MizJam1.Levels
                 SelectedUnit = units[position.Y, position.X];
                 if (SelectedUnit != null)
                 {
-                    CanGoPositions = GetAccessiblePoints(SelectedUnit);
+                    canGoPositions = GetAccessiblePoints(SelectedUnit);
 
                     foreach (var unit in units)
                     {
                         if (unit == null) continue;
                         if (unit.Enemy == SelectedUnit.Enemy && unit != SelectedUnit)
                         {
-                            CanGoPositions.Remove(unit.Position);
+                            canGoPositions.Remove(unit.Position);
                         }
                     }
-                    ThreathenPositions = GetThreathenSpaces(CanGoPositions, SelectedUnit);
+                    threatenedPositions = GetThreathenSpaces(canGoPositions, SelectedUnit);
 
-                    CanGoPositions.Remove(new Point(position.X, position.Y));
-                    ThreathenPositions.Remove(new Point(position.X, position.Y));
+                    canGoPositions.Remove(new Point(position.X, position.Y));
+                    threatenedPositions.Remove(new Point(position.X, position.Y));
 
                 }
                 else UnselectTiles();
@@ -211,8 +216,8 @@ namespace MizJam1.Levels
 
         private void UnselectTiles()
         {
-            CanGoPositions = null;
-            ThreathenPositions = null;
+            canGoPositions = null;
+            threatenedPositions = null;
         }
 
         public void MoveUnit(Point unitPos, Point destination)
@@ -224,9 +229,9 @@ namespace MizJam1.Levels
             UnselectUnit();
             UnselectTiles();
         }
-        private HashSet<Point> GetThreathenSpaces(HashSet<Point> reach, Unit unit)
+        private Dictionary<Point, ThreatenedCell> GetThreathenSpaces(HashSet<Point> reach, Unit unit)
         {
-            var threathenedSpaces = new HashSet<Point>();
+            var threathenedSpaces = new Dictionary<Point, ThreatenedCell>();
 
             int minimumRange = 1;
             if (unit.Stats[Stats.Range] > 0 && unit.Stats[Stats.Magic] == 0)
@@ -237,21 +242,42 @@ namespace MizJam1.Levels
             {
                 for (int i = unit.Stats[Stats.Range] + 1; i >= minimumRange; i--)
                 {
+                    int currPriority = i * 10;
                     for (int j = i; j != 0; j--)
                     {
-                        threathenedSpaces.Add(new Point(pos.X - j, pos.Y - (i - j)));
+                        Point threatPos = new Point(pos.X - j, pos.Y - (i - j));
+                        if (threathenedSpaces.ContainsKey(threatPos) && threathenedSpaces[threatPos].Priority >= currPriority)
+                        {
+                            continue;
+                        }
+                        threathenedSpaces[threatPos] = new ThreatenedCell() { Position = threatPos, From = pos, Priority = currPriority };
                     }
                     for (int j = i; j != 0; j--)
                     {
-                        threathenedSpaces.Add(new Point(pos.X + (i - j), pos.Y - j));
+                        Point threatPos = new Point(pos.X + (i - j), pos.Y - j);
+                        if (threathenedSpaces.ContainsKey(threatPos) && threathenedSpaces[threatPos].Priority >= currPriority)
+                        {
+                            continue;
+                        }
+                        threathenedSpaces[threatPos] = new ThreatenedCell() { Position = threatPos, From = pos, Priority = currPriority };
                     }
                     for (int j = i; j != 0; j--)
                     {
-                        threathenedSpaces.Add(new Point(pos.X + j, pos.Y + (i - j)));
+                        Point threatPos = new Point(pos.X + j, pos.Y + (i - j));
+                        if (threathenedSpaces.ContainsKey(threatPos) && threathenedSpaces[threatPos].Priority >= currPriority)
+                        {
+                            continue;
+                        }
+                        threathenedSpaces[threatPos] = new ThreatenedCell() { Position = threatPos, From = pos, Priority = currPriority };
                     }
                     for (int j = i; j != 0; j--)
                     {
-                        threathenedSpaces.Add(new Point(pos.X - (i - j), pos.Y + j));
+                        Point threatPos = new Point(pos.X - (i - j), pos.Y + j);
+                        if (threathenedSpaces.ContainsKey(threatPos) && threathenedSpaces[threatPos].Priority >= currPriority)
+                        {
+                            continue;
+                        }
+                        threathenedSpaces[threatPos] = new ThreatenedCell() { Position = threatPos, From = pos, Priority = currPriority };
                     }
                 }
             }
@@ -276,7 +302,12 @@ namespace MizJam1.Levels
 
             return hashset;
         }
-
+        /// <summary>
+        /// Recursive function that gets the accessible cells for the given range
+        /// </summary>
+        /// <param name="position"></param>
+        /// <param name="rangeLeft"></param>
+        /// <param name="result"></param>
         private void GetAccessiblePoints(Point position, int rangeLeft, Dictionary<Point, int> result)
         {
             if (rangeLeft < 0)
@@ -320,9 +351,7 @@ namespace MizJam1.Levels
         public void Draw(SpriteBatch spriteBatch, Texture2D[] textures, Texture2D tileSelectedTexture)
         {
             DrawCells(spriteBatch, textures);
-
             DrawAreaTiles(spriteBatch, tileSelectedTexture);
-
             DrawUnits(spriteBatch, textures);
         }
 
@@ -330,9 +359,9 @@ namespace MizJam1.Levels
         {
             foreach (var layer in layers)
             {
-                for (int i = 0; i < layer.GetLength(0); i++)
+                for (int i = 0; i < Height; i++)
                 {
-                    for (int j = 0; j < layer.GetLength(1); j++)
+                    for (int j = 0; j < Width; j++)
                     {
                         Cell cell = layer[i, j];
                         if (cell.ID == 0)
@@ -356,20 +385,20 @@ namespace MizJam1.Levels
 
         private void DrawAreaTiles(SpriteBatch spriteBatch, Texture2D tileSelectedTexture)
         {
-            if (CanGoPositions != null)
+            if (canGoPositions != null)
             {
                 int animation = ((int)animationTimer) / 100 % 4;
-                foreach (var pos in ThreathenPositions)
+                foreach (var threatPos in threatenedPositions)
                 {
-                    if (GetCell(pos).ID == 0) continue;
+                    if (GetCell(threatPos.Key).ID == 0) continue;
 
                     spriteBatch.Draw(
                         tileSelectedTexture,
-                        new Rectangle(CellToWorld(pos), Global.SpriteSize),
+                        new Rectangle(CellToWorld(threatPos.Key), Global.SpriteSize),
                         new Rectangle(new Point(Global.SpriteWidth * animation, 0), Global.SpriteSize),
                         Global.Colors.Accent4);
                 }
-                foreach (var pos in CanGoPositions)
+                foreach (var pos in canGoPositions)
                 {
                     if (GetCell(pos).ID == 0) continue;
                     Color color = SelectedUnit.Enemy ? Global.Colors.Accent4 : Global.Colors.Accent3;
@@ -386,9 +415,9 @@ namespace MizJam1.Levels
         private void DrawUnits(SpriteBatch spriteBatch, Texture2D[] textures)
         {
             int animation = ((int)animationTimer) / 500 % 2;
-            for (int i = 0; i < units.GetLength(0); i++)
+            for (int i = 0; i < Height; i++)
             {
-                for (int j = 0; j < units.GetLength(1); j++)
+                for (int j = 0; j < Width; j++)
                 {
                     Unit unit = units[i, j];
                     if (unit == null) continue;

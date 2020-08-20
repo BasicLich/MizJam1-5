@@ -15,7 +15,7 @@ namespace MizJam1.Units
                 [Magic] = 0,
                 [MagicDefense] = 3,
                 [Stats.Range] = 0,
-                [Speed] = 5
+                [Speed] = 4
             }),
             ["Ranger"] = new UnitClass("Ranger", (Attack, Stats.Range), new Dictionary<Stats, ushort>()
             {
@@ -23,7 +23,7 @@ namespace MizJam1.Units
                 [Defense] = 0,
                 [Magic] = 0,
                 [MagicDefense] = 3,
-                [Speed] = 5
+                [Speed] = 4
             }),
             ["Zombie"] = new UnitClass("Zombie", (Defense, MagicDefense), new Dictionary<Stats, ushort>()
             {

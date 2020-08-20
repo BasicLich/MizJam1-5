@@ -53,13 +53,6 @@ namespace MizJam1
 
         protected override void Initialize()
         {
-            camera = new Camera
-            {
-                ViewportHeight = 1080,
-                ViewportWidth = 1080,
-                Zoom = 3f
-            };
-
             GameState = GameStates.MainMenu;
 
             Window.AllowUserResizing = true;
@@ -101,6 +94,12 @@ namespace MizJam1
                 levels[i] = new Level(levelDoc, this);
             }
             currentLevel = levels[0];
+            camera = new Camera(currentLevel.Width, currentLevel.Height)
+            {
+                ViewportHeight = 1080,
+                ViewportWidth = 1080,
+                Zoom = 3f
+            };
 
             mainMenu = new UIContainer(Point.Zero, new Point(1920, 1080), true);
             UIMenu menu = new UIMenu(Point.Zero, new Point(1000, 600), true)

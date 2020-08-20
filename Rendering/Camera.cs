@@ -8,10 +8,15 @@ namespace MizJam1.Rendering
     public class Camera
     {
         // Construct a new Camera class with standard zoom (no scaling)
-        public Camera()
+        public Camera(int levelCellWidth, int levelCellHeight)
         {
             Zoom = 1.0f;
+            LevelCellWidth = levelCellWidth;
+            LevelCellHeight = levelCellHeight;
         }
+
+        public int LevelCellWidth { get; set; }
+        public int LevelCellHeight { get; set; }
 
         // Centered Position of the Camera in pixels.
         public Vector2 Position { get; set; }
@@ -99,9 +104,9 @@ namespace MizJam1.Rendering
         // Clamp the camera so it never leaves the visible area of the map.
         private Vector2 MapClampedPosition(Vector2 position)
         {
-            var cameraMax = new Vector2(Global.MapWidth * Global.SpriteWidth -
+            var cameraMax = new Vector2(LevelCellWidth * Global.SpriteWidth -
                 (ViewportWidth / Zoom / 2),
-                Global.MapHeight * Global.SpriteHeight -
+                LevelCellHeight * Global.SpriteHeight -
                 (ViewportHeight / Zoom / 2));
             cameraMax.Floor();
             var cameraMin = new Vector2(ViewportWidth / Zoom / 2, ViewportHeight / Zoom / 2);
