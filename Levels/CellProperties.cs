@@ -7,7 +7,7 @@ namespace MizJam1.Levels
 {
     public struct CellProperties
     {
-        private static Dictionary<uint, CellProperties> cellProperties = new Dictionary<uint, CellProperties>();
+        private static readonly Dictionary<uint, CellProperties> cellProperties = new Dictionary<uint, CellProperties>();
         static CellProperties()
         {
             CellProperties regularTile = new CellProperties(false, 20);

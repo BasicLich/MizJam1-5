@@ -1,4 +1,5 @@
-﻿using MizJam1.Units;
+﻿using Microsoft.Xna.Framework;
+using MizJam1.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,7 +23,10 @@ namespace MizJam1.Units
             FlippedDiagonally = (id & FLIPPED_DIAGONALLY_FLAG) != 0;
             Name = name;
             UnitClass = unitClass;
-            Stats = new Dictionary<Stats, ushort>();
+
+            Stats = UnitClass.DefaultStatsValue;
+            Stats[UnitClass.OppositeStats.Item1] = 4;
+            Stats[UnitClass.OppositeStats.Item2] = 3;
             Enemy = enemy;
         }
 
@@ -37,6 +41,8 @@ namespace MizJam1.Units
         public bool FlippedDiagonally { get; set; }
         public bool FlippedHorizontally { get; set; }
         public bool FlippedVertically { get; set; }
+
+        public Point Position { get; set; }
 
         private ushort health;
         public ushort Health { get { return health; } set { if (value < Stats[MaxHealth]) health = value; else health = Stats[MaxHealth]; } }

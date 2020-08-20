@@ -21,6 +21,7 @@ namespace MizJam1.Levels
 
         public uint ID { get; set; }
         public float Rotation => FlippedDiagonally ? ROTATION_RADIANS : 0f;
+        public CellProperties Properties => CellProperties.GetCellProperties(ID);
         public bool FlippedDiagonally { get; set; }
         public bool FlippedHorizontally { get; set; }
         public bool FlippedVertically { get; set; }
