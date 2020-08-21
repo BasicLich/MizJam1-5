@@ -1,4 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
+using System;
+
 namespace MizJam1.Rendering
 {
     /// <summary>
@@ -8,15 +10,20 @@ namespace MizJam1.Rendering
     public class Camera
     {
         // Construct a new Camera class with standard zoom (no scaling)
-        public Camera(int levelCellWidth, int levelCellHeight)
+        public Camera(int viewportWidth, int viewportHeight, int levelCellWidth, int levelCellHeight)
         {
-            Zoom = 1.0f;
+            ViewportWidth = viewportWidth;
+            ViewportHeight = viewportHeight;
             LevelCellWidth = levelCellWidth;
             LevelCellHeight = levelCellHeight;
+            zoom = MinZoom;
+            MoveCamera(Vector2.Zero, true);
         }
 
         public int LevelCellWidth { get; set; }
         public int LevelCellHeight { get; set; }
+        public Point LevelCellSize => new Point(LevelCellWidth, LevelCellHeight);
+        public Point LevelSize => LevelCellSize * Global.SpriteSize;
 
         // Centered Position of the Camera in pixels.
         public Vector2 Position { get; set; }
@@ -27,12 +34,16 @@ namespace MizJam1.Rendering
             get => zoom;
             set
             {
-                if (value < 1f) zoom = 1f;
+                if (value < MinZoom) zoom = MinZoom;
                 else if (value > 8f) zoom = 8f;
-                else zoom = value;
+                else
+                {
+                    zoom = value;
+                }
                 MoveCamera(Vector2.Zero, true);
             }
         }
+        public float MinZoom => Math.Max(((float)ViewportWidth) / LevelSize.X, ((float)ViewportHeight) / LevelSize.Y);
         // Current Rotation amount with 0.0f being standard orientation
         public float Rotation { get; set; }
 

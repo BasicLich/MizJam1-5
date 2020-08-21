@@ -28,6 +28,8 @@ namespace MizJam1.Units
             Stats[UnitClass.OppositeStats.Item1] = 4;
             Stats[UnitClass.OppositeStats.Item2] = 3;
             Enemy = enemy;
+
+            Acted = false;
         }
 
         public Dictionary<Stats, ushort> Stats;
@@ -43,6 +45,7 @@ namespace MizJam1.Units
         public bool FlippedVertically { get; set; }
 
         public Point Position { get; set; }
+        public bool Acted { get; set; }
 
         private ushort health;
         public ushort Health { get { return health; } set { if (value < Stats[MaxHealth]) health = value; else health = Stats[MaxHealth]; } }

@@ -33,6 +33,7 @@ namespace MizJam1
         private SpriteFont mainFont;
         private SpriteFont mizjamBigFont;
         private SpriteFont mizjamSmallFont;
+        private Texture2D whitePixel;
         private Texture2D[] textures;
         private Texture2D windowBorder;
         private Texture2D transparentTileSelect;
@@ -79,6 +80,7 @@ namespace MizJam1
             mainFont = Content.Load<SpriteFont>("Fonts/mainFont");
             mizjamBigFont = Content.Load<SpriteFont>("Fonts/mizjam36");
             mizjamSmallFont = Content.Load<SpriteFont>("Fonts/mizjam24");
+            whitePixel = Content.Load<Texture2D>("whitePixel");
             textures[0] = Content.Load<Texture2D>("colored_packed");
             textures[1] = Content.Load<Texture2D>("colored_transparent_packed");
             textures[2] = Content.Load<Texture2D>("monochrome_packed");
@@ -94,12 +96,7 @@ namespace MizJam1
                 levels[i] = new Level(levelDoc, this);
             }
             currentLevel = levels[0];
-            camera = new Camera(currentLevel.Width, currentLevel.Height)
-            {
-                ViewportHeight = 1080,
-                ViewportWidth = 1080,
-                Zoom = 3f
-            };
+            camera = new Camera(1080, 1080, currentLevel.Width, currentLevel.Height);
 
             mainMenu = new UIContainer(Point.Zero, new Point(1920, 1080), true);
             UIMenu menu = new UIMenu(Point.Zero, new Point(1000, 600), true)
@@ -180,7 +177,7 @@ namespace MizJam1
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Global.Colors.Main3);
+            GraphicsDevice.Clear(Global.Colors.Background2);
             screenSpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp);
             mapSpriteBatch.Begin(SpriteSortMode.Deferred, BlendState.AlphaBlend, SamplerState.PointClamp, transformMatrix: camera.TransformationMatrix);
 
@@ -191,18 +188,20 @@ namespace MizJam1
             else
             {
                 currentLevel.Draw(mapSpriteBatch, textures, transparentTileSelect);
-                screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Color.Black);
-                screenSpriteBatch.Draw(windowBorder, new Rectangle(1500, 0, 420, 1080), Color.Black);
+                screenSpriteBatch.Draw(whitePixel, new Rectangle(0, 0, 420, 1080), Global.Colors.Background2);
+                screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Global.Colors.Main1);
+                screenSpriteBatch.Draw(whitePixel, new Rectangle(1500, 0, 420, 1080), Global.Colors.Background2);
+                screenSpriteBatch.Draw(windowBorder, new Rectangle(1500, 0, 420, 1080), Global.Colors.Main1);
                 Unit unit;
                 if ((unit = currentLevel.SelectedUnit ?? currentLevel.MouseOverUnit) != null)
                 {
-                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("NAME: {0}\nCLASS: {1}\nALLY: {2}", unit.Name.ToUpper(), unit.UnitClass.Name.ToUpper(), unit.Enemy ? "NO" : "YES"), new Vector2(1505, 5), Global.Colors.Main1);
+                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("NAME: {0}\nCLASS: {1}\nALLY: {2}", unit.Name.ToUpper(), unit.UnitClass.Name.ToUpper(), unit.Enemy ? "NO" : "YES"), new Vector2(1505 + 48, 5 + 48), Global.Colors.Main1);
                 }
                 Cell cell;
                 if ((cell = currentLevel.MouseOverCell).ID != 0)
                 {
                     CellProperties props = cell.Properties;
-                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("SOLID: {0}\nDIFF: {1}", props.IsSolid ? "YES" : "NO", props.Difficulty), new Vector2(5), Global.Colors.Main1);
+                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("SOLID: {0}\nDIFF: {1}", props.IsSolid ? "YES" : "NO", props.Difficulty), new Vector2(5 + 48), Global.Colors.Main1);
                 }
             }
 

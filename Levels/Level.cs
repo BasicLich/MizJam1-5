@@ -175,14 +175,15 @@ namespace MizJam1.Levels
 
             if (!IsPositionInvalid(position))
             {
-                if (SelectedUnit != null && canGoPositions.Contains(position) && !SelectedUnit.Enemy)
+                if (SelectedUnit != null && canGoPositions != null && canGoPositions.Contains(position) && !SelectedUnit.Enemy)
                 {
+                    SelectedUnit.Acted = true;
                     MoveUnit(SelectedUnit.Position, position);
                     return;
                 }
 
                 SelectedUnit = units[position.Y, position.X];
-                if (SelectedUnit != null)
+                if (SelectedUnit != null && !SelectedUnit.Acted)
                 {
                     canGoPositions = GetAccessiblePoints(SelectedUnit);
 
@@ -421,13 +422,25 @@ namespace MizJam1.Levels
                 {
                     Unit unit = units[i, j];
                     if (unit == null) continue;
+                    Color color1 = Global.Colors.Accent3;
+                    Color color2 = Global.Colors.Accent2;
+                    if (unit.Enemy)
+                    {
+                        color1 = Global.Colors.Accent4;
+                        color2 = Global.Colors.Accent1;
+                    }
+                    Color currColor = color1;
+                    if (!unit.Acted && animation == 1)
+                    {
+                        currColor = color2;
+                    }
 
                     Vector2 origin = new Vector2(Global.SpriteWidth / 2, Global.SpriteHeight / 2);
                     spriteBatch.Draw(
                             textures[TextureIDInterpreter.GetTextureID(unit.ID)],
                             new Rectangle(j * Global.SpriteWidth + (int)origin.X, i * Global.SpriteHeight + (int)origin.Y, Global.SpriteWidth, Global.SpriteHeight),
                             TextureIDInterpreter.GetSourceRectangle(unit.ID),
-                            unit.Enemy ? animation == 0 ? Global.Colors.Accent4 : Global.Colors.Accent1 : animation == 0 ? Global.Colors.Accent2 : Global.Colors.Accent3,
+                            currColor,
                             unit.Rotation,
                             origin,
                             (unit.FlippedHorizontally ? SpriteEffects.FlipHorizontally : SpriteEffects.None) | (unit.FlippedVertically ? SpriteEffects.FlipVertically : SpriteEffects.None),
