@@ -10,6 +10,12 @@ namespace MizJam1.UIComponents
         {
             Image = image;
             ImageColor = Color.White;
+            Size = image.Bounds.Size;
+        }
+
+        public UIImage(Texture2D image, Texture2D selectedImage) : this(image)
+        {
+            SelectedImage = selectedImage;
         }
 
         /// <summary>
@@ -17,6 +23,7 @@ namespace MizJam1.UIComponents
         /// </summary>
         /// <value>The image.</value>
         public Texture2D Image { get; set; }
+        public Texture2D SelectedImage { get; set; }
         /// <summary>
         /// This image's masking color. White shows the image as is.
         /// </summary>
@@ -31,7 +38,13 @@ namespace MizJam1.UIComponents
         {
             base.Draw(sb);
 
-            sb.Draw(Image, new Rectangle(AbsolutePosition, Size), Color.White);
+            if (Selected && SelectedImage != null)
+            {
+                sb.Draw(SelectedImage, new Rectangle(AbsolutePosition, Size), Color.White);
+            } else
+            {
+                sb.Draw(Image, new Rectangle(AbsolutePosition, Size), Color.White);
+            }
         }
     }
 }

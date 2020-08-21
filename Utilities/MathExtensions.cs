@@ -158,5 +158,7 @@ namespace MizJam1.Utilities
         /// <param name="dict"></param>
         /// <returns></returns>
         public static KeyValuePair<T, T2> RandomFromDictionary<T, T2>(this Random rand, Dictionary<T, T2> dict) => dict.Skip(rand.Next(dict.Count)).First();
+
+        public static int CellDistance(Point p1, Point p2) => Abs(p1.X - p2.X) + Abs(p1.Y - p2.Y);
     }
 }

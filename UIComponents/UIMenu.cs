@@ -16,6 +16,7 @@ namespace MizJam1.UIComponents
         /// <param name="child">Child.</param>
         public override void AddChild(UIComponent child)
         {
+            child.SetScale(Scale);
             children.Add(child);
             child.SetParent(this);
 
@@ -36,6 +37,7 @@ namespace MizJam1.UIComponents
             }
 
             if (KeepCentered) CenterPadding();
+            UpdateChildrenAlignment();
         }
 
         /// <summary>
@@ -113,6 +115,9 @@ namespace MizJam1.UIComponents
             if (!children.Any()) return;
 
             UIComponent previous = children.First();
+            previous.Position = PaddingUpLeft;
+
+            Point newSize = previous.Size;
 
             if (Vertical)
             {
@@ -121,7 +126,7 @@ namespace MizJam1.UIComponents
                     child.Position = new Point(
                       previous.X + (previous.Width - child.Width),
                       previous.Y + previous.Height + SpaceBetweenChildren);
-
+                    newSize = new Point(Math.Max(newSize.X, child.X), newSize.Y + child.Height + SpaceBetweenChildren);
                     previous = child;
                 }
             }
@@ -132,10 +137,14 @@ namespace MizJam1.UIComponents
                     child.Position = new Point(
                       previous.X + previous.Width + SpaceBetweenChildren,
                       previous.Y + (previous.Height - child.Height));
+                    newSize = new Point(newSize.X + child.Width + SpaceBetweenChildren, Math.Max(newSize.Y, child.Y));
 
                     previous = child;
                 }
             }
+
+            newSize += PaddingUpLeft;
+            Size = newSize;
         }
 
         /// <summary>
@@ -178,5 +187,8 @@ namespace MizJam1.UIComponents
                 }
             }
         }
+
+        private Point size;
+        public override Point Size { get => size; set => size = value; }
     }
 }

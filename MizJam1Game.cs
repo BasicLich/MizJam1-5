@@ -22,7 +22,20 @@ namespace MizJam1
             Paused,
             PrefightPhase,
             FightPhase,
+            OpenDialog,
             DefensePhase
+        }
+
+        public enum Actions
+        {
+            Wait,
+            Move,
+            Defend,
+            Attack,
+            Reroll,
+            Heal,
+            EndTurn,
+            Cancel
         }
 
         private GraphicsDeviceManager graphics;
@@ -30,13 +43,15 @@ namespace MizJam1
         private SpriteBatch screenSpriteBatch;
         private Camera camera;
 
-        private SpriteFont mainFont;
         private SpriteFont mizjamBigFont;
         private SpriteFont mizjamSmallFont;
         private Texture2D whitePixel;
         private Texture2D[] textures;
         private Texture2D windowBorder;
-        private Texture2D transparentTileSelect;
+        public Texture2D TransparentTileSelect { get; set; }
+        public Texture2D SelectedUnitBorder { get; set; }
+        public Dictionary<Actions, Texture2D> Dialogs { get; set; }
+        public Dictionary<Actions, Texture2D> SelectedDialogs { get; set; }
         private Level[] levels;
         private Level currentLevel;
         private UIContainer mainMenu;
@@ -48,6 +63,9 @@ namespace MizJam1
             Content.RootDirectory = "Content";
             IsMouseVisible = false;
             GameState = GameStates.MainMenu;
+            Dialogs = new Dictionary<Actions, Texture2D>();
+            SelectedDialogs = new Dictionary<Actions, Texture2D>();
+
         }
 
         public GameStates GameState { get; set; }
@@ -77,7 +95,6 @@ namespace MizJam1
             mapSpriteBatch = new SpriteBatch(GraphicsDevice);
             screenSpriteBatch = new SpriteBatch(GraphicsDevice);
 
-            mainFont = Content.Load<SpriteFont>("Fonts/mainFont");
             mizjamBigFont = Content.Load<SpriteFont>("Fonts/mizjam36");
             mizjamSmallFont = Content.Load<SpriteFont>("Fonts/mizjam24");
             whitePixel = Content.Load<Texture2D>("whitePixel");
@@ -86,7 +103,22 @@ namespace MizJam1
             textures[2] = Content.Load<Texture2D>("monochrome_packed");
             textures[3] = Content.Load<Texture2D>("monochrome_transparent_packed");
             windowBorder = Content.Load<Texture2D>("Textures/WindowBorder");
-            transparentTileSelect = Content.Load<Texture2D>("Textures/TransparentTileSelect");
+            Dialogs[Actions.Move] = Content.Load<Texture2D>("Textures/Dialogs/MoveDialog");
+            Dialogs[Actions.Attack] = Content.Load<Texture2D>("Textures/Dialogs/AttackDialog");
+            Dialogs[Actions.Defend] = Content.Load<Texture2D>("Textures/Dialogs/DefendDialog");
+            Dialogs[Actions.Heal] = Content.Load<Texture2D>("Textures/Dialogs/HealDialog");
+            Dialogs[Actions.Reroll] = Content.Load<Texture2D>("Textures/Dialogs/RerollDialog");
+            Dialogs[Actions.Wait] = Content.Load<Texture2D>("Textures/Dialogs/WaitDialog");
+            Dialogs[Actions.Cancel] = Content.Load<Texture2D>("Textures/Dialogs/CancelDialog");
+            SelectedDialogs[Actions.Move] = Content.Load<Texture2D>("Textures/Dialogs/MoveSelectedDialog");
+            SelectedDialogs[Actions.Attack] = Content.Load<Texture2D>("Textures/Dialogs/AttackSelectedDialog");
+            SelectedDialogs[Actions.Defend] = Content.Load<Texture2D>("Textures/Dialogs/DefendSelectedDialog");
+            SelectedDialogs[Actions.Heal] = Content.Load<Texture2D>("Textures/Dialogs/HealSelectedDialog");
+            SelectedDialogs[Actions.Reroll] = Content.Load<Texture2D>("Textures/Dialogs/RerollSelectedDialog");
+            SelectedDialogs[Actions.Wait] = Content.Load<Texture2D>("Textures/Dialogs/WaitSelectedDialog");
+            SelectedDialogs[Actions.Cancel] = Content.Load<Texture2D>("Textures/Dialogs/CancelSelectedDialog");
+            TransparentTileSelect = Content.Load<Texture2D>("Textures/TransparentTileSelect");
+            SelectedUnitBorder = Content.Load<Texture2D>("Textures/SelectedUnitBorder");
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -163,10 +195,17 @@ namespace MizJam1
                     camera.MoveCamera(new Vector2(0, -3), true);
                 if (Keyboard.GetState().IsKeyDown(Keys.Down))
                     camera.MoveCamera(new Vector2(0, 3), true);
-                currentLevel.MouseOver(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint());
-                if (MouseAdapter.ConsumeLeftClick)
+                if (MouseAdapter.Position.X > 420 && MouseAdapter.Position.X < 1500) //Mouse inside of game window
                 {
-                    currentLevel.LeftClick(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint());
+                    currentLevel.MouseOver(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint(), MouseAdapter.Position);
+                    if (MouseAdapter.ConsumeLeftClick)
+                    {
+                        currentLevel.LeftClick(camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToPoint(), MouseAdapter.Position);
+                    }
+                }
+                else
+                {
+                    currentLevel.MouseOver(new Point(-10000, -10000), MouseAdapter.Position);
                 }
             }
 
@@ -187,7 +226,7 @@ namespace MizJam1
             }
             else
             {
-                currentLevel.Draw(mapSpriteBatch, textures, transparentTileSelect);
+                currentLevel.Draw(mapSpriteBatch, screenSpriteBatch, textures);
                 screenSpriteBatch.Draw(whitePixel, new Rectangle(0, 0, 420, 1080), Global.Colors.Background2);
                 screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Global.Colors.Main1);
                 screenSpriteBatch.Draw(whitePixel, new Rectangle(1500, 0, 420, 1080), Global.Colors.Background2);
