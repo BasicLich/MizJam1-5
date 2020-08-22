@@ -7,6 +7,8 @@ using MizJam1.Rendering;
 using MizJam1.UIComponents;
 using MizJam1.UIComponents.Commands;
 using MizJam1.Units;
+using MizJam1.Utilities;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Xml.Linq;
@@ -23,6 +25,7 @@ namespace MizJam1
             PrefightPhase,
             FightPhase,
             OpenDialog,
+            SelectAttack,
             DefensePhase
         }
 
@@ -43,6 +46,8 @@ namespace MizJam1
         private SpriteBatch screenSpriteBatch;
         private Camera camera;
 
+        private int levelIndex = 0;
+
         private SpriteFont mizjamBigFont;
         private SpriteFont mizjamSmallFont;
         private Texture2D whitePixel;
@@ -50,6 +55,9 @@ namespace MizJam1
         private Texture2D windowBorder;
         public Texture2D TransparentTileSelect { get; set; }
         public Texture2D SelectedUnitBorder { get; set; }
+        public Texture2D statSlider { get; set; }
+        public Texture2D statSliderPin { get; set; }
+        public Texture2D dice { get; set; }
         public Dictionary<Actions, Texture2D> Dialogs { get; set; }
         public Dictionary<Actions, Texture2D> SelectedDialogs { get; set; }
         private Level[] levels;
@@ -97,6 +105,7 @@ namespace MizJam1
 
             mizjamBigFont = Content.Load<SpriteFont>("Fonts/mizjam36");
             mizjamSmallFont = Content.Load<SpriteFont>("Fonts/mizjam24");
+            mizjamSmallFont.LineSpacing = mizjamSmallFont.LineSpacing + 5;
             whitePixel = Content.Load<Texture2D>("whitePixel");
             textures[0] = Content.Load<Texture2D>("colored_packed");
             textures[1] = Content.Load<Texture2D>("colored_transparent_packed");
@@ -119,6 +128,9 @@ namespace MizJam1
             SelectedDialogs[Actions.Cancel] = Content.Load<Texture2D>("Textures/Dialogs/CancelSelectedDialog");
             TransparentTileSelect = Content.Load<Texture2D>("Textures/TransparentTileSelect");
             SelectedUnitBorder = Content.Load<Texture2D>("Textures/SelectedUnitBorder");
+            statSlider = Content.Load<Texture2D>("Textures/Slider");
+            statSliderPin = Content.Load<Texture2D>("Textures/SliderPin");
+            dice = Content.Load<Texture2D>("Textures/Dice");
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -210,6 +222,12 @@ namespace MizJam1
             }
 
             currentLevel.Update(gameTime);
+            if (currentLevel.LevelFinished)
+            {
+                levelIndex++;
+                currentLevel = levels[levelIndex];
+                currentLevel.Start();
+            }
 
             base.Update(gameTime);
         }
@@ -226,22 +244,7 @@ namespace MizJam1
             }
             else
             {
-                currentLevel.Draw(mapSpriteBatch, screenSpriteBatch, textures);
-                screenSpriteBatch.Draw(whitePixel, new Rectangle(0, 0, 420, 1080), Global.Colors.Background2);
-                screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Global.Colors.Main1);
-                screenSpriteBatch.Draw(whitePixel, new Rectangle(1500, 0, 420, 1080), Global.Colors.Background2);
-                screenSpriteBatch.Draw(windowBorder, new Rectangle(1500, 0, 420, 1080), Global.Colors.Main1);
-                Unit unit;
-                if ((unit = currentLevel.SelectedUnit ?? currentLevel.MouseOverUnit) != null)
-                {
-                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("NAME: {0}\nCLASS: {1}\nALLY: {2}", unit.Name.ToUpper(), unit.UnitClass.Name.ToUpper(), unit.Enemy ? "NO" : "YES"), new Vector2(1505 + 48, 5 + 48), Global.Colors.Main1);
-                }
-                Cell cell;
-                if ((cell = currentLevel.MouseOverCell).ID != 0)
-                {
-                    CellProperties props = cell.Properties;
-                    screenSpriteBatch.DrawString(mizjamSmallFont, string.Format("SOLID: {0}\nDIFF: {1}", props.IsSolid ? "YES" : "NO", props.Difficulty), new Vector2(5 + 48), Global.Colors.Main1);
-                }
+                drawLevel();
             }
 
             //Dice
@@ -254,6 +257,107 @@ namespace MizJam1
             base.Draw(gameTime);
             mapSpriteBatch.End();
             screenSpriteBatch.End();
+        }
+
+        private void drawLevel()
+        {
+            currentLevel.Draw(mapSpriteBatch, screenSpriteBatch, textures);
+            
+            drawLeftWindow();
+            drawRightWindow();
+        }
+
+        private void drawLeftWindow()
+        {
+            screenSpriteBatch.Draw(whitePixel, new Rectangle(0, 0, 420, 1080), Global.Colors.Background2);
+            screenSpriteBatch.Draw(windowBorder, new Rectangle(0, 0, 420, 1080), Global.Colors.Main1);
+
+            Cell cell;
+            if ((cell = currentLevel.MouseOverCell).ID != 0)
+            {
+                string infoTitles = "SOLID: \nDIFF: ";
+                string information = "\n{0}\n{1}";
+
+                CellProperties props = cell.Properties;
+
+                information = string.Format(information,
+                    props.IsSolid ? "YES" : "NO",
+                    props.Difficulty);
+                int width = (int)Math.Ceiling(mizjamSmallFont.MeasureString(infoTitles).X);
+                screenSpriteBatch.DrawString(mizjamSmallFont, "CURRENT TILE\n" + infoTitles, new Vector2(48), Global.Colors.Main1);
+                screenSpriteBatch.DrawString(mizjamSmallFont, information, new Vector2(48 + width, 48), Global.Colors.Main1);
+            }
+        }
+
+        private void drawRightWindow()
+        {
+            screenSpriteBatch.Draw(whitePixel, new Rectangle(1500, 0, 420, 1080), Global.Colors.Background2);
+            screenSpriteBatch.Draw(windowBorder, new Rectangle(1500, 0, 420, 1080), Global.Colors.Main1);
+
+            Unit unit;
+            if ((unit = currentLevel.SelectedUnit ?? currentLevel.MouseOverUnit) != null)
+            {
+                string infoTitles = "UNIT\nNAME:  \nTYPE:  \nALLY:  \nHP:  \nATT:  \nDEF:  \nMAG:  \nMDEF:  \nRNG:  \nSPD:  \n";
+                string information = "\n{0}\n{1}\n{2}\n{3}/{4}\n{5}\n{6}\n{7}\n{8}\n{9}\n{10}\n";
+
+                information = string.Format(information,
+                    unit.Name.ToUpper(),
+                    unit.UnitClass.Name.ToUpper(),
+                    unit.Enemy ? "NO" : "YES",
+                    unit.Health,
+                    unit.Stats.ContainsKey(Stats.MaxHealth) ? unit.Stats[Stats.MaxHealth].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.Attack) ? unit.Stats[Stats.Attack].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.Defense) ? unit.Stats[Stats.Defense].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.Magic) ? unit.Stats[Stats.Magic].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.MagicDefense) ? unit.Stats[Stats.MagicDefense].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.Range) ? unit.Stats[Stats.Range].ToString() : "",
+                    unit.Stats.ContainsKey(Stats.Speed) ? unit.Stats[Stats.Speed].ToString() : "");
+                Point size = mizjamSmallFont.MeasureString(infoTitles).ToPoint();
+                screenSpriteBatch.DrawString(mizjamSmallFont, infoTitles, new Vector2(1500 + 48, 48), Global.Colors.Main1);
+                screenSpriteBatch.DrawString(mizjamSmallFont, information, new Vector2(1500 + 48 + size.X, 48), Global.Colors.Main1);
+                int sliderHeight = size.Y + mizjamSmallFont.LineSpacing * 2 + 48;
+                string leftStat = StatsUtils.GetName(unit.UnitClass.OppositeStats.Item1);
+                string rightStat = StatsUtils.GetName(unit.UnitClass.OppositeStats.Item2);
+                screenSpriteBatch.DrawString(mizjamSmallFont, leftStat, new Point(1500 + 48 + 18, sliderHeight - mizjamSmallFont.LineSpacing).ToVector2(), Global.Colors.Main1);
+                screenSpriteBatch.DrawString(mizjamSmallFont, rightStat, new Point(1920 - 48 - 18 - mizjamSmallFont.MeasureString(rightStat).ToPoint().X, sliderHeight - mizjamSmallFont.LineSpacing).ToVector2(), Global.Colors.Main1);
+                screenSpriteBatch.Draw(statSlider, new Rectangle(new Point(1500 + 48 + 18, sliderHeight), new Point(6 * Global.SpriteWidth * 3, Global.SpriteHeight * 3)), Color.White);
+                if (unit.Stats.ContainsKey(unit.UnitClass.OppositeStats.Item1))
+                {
+                    int sliderPinOffset = 48;
+                    int statValue = unit.Stats[unit.UnitClass.OppositeStats.Item1];
+                    if (statValue > 1)
+                    {
+                        sliderPinOffset += 48;
+                    }
+                    if (statValue > 3)
+                    {
+                        sliderPinOffset += 48;
+                    }
+                    if (statValue > 5)
+                    {
+                        sliderPinOffset += 48;
+                    }
+
+                    screenSpriteBatch.Draw(
+                        statSliderPin,
+                        new Rectangle(new Point(1500 + 48 + 18 + sliderPinOffset, sliderHeight),
+                        Global.SpriteSize.Multiply(3)),
+                        Color.White);
+                    screenSpriteBatch.Draw(
+                        dice,
+                        new Rectangle(new Point(1500 + 48 + 18, sliderHeight),
+                        Global.SpriteSize.Multiply(3)), new Rectangle(new Point((statValue - 1) * 16, 16),
+                        Global.SpriteSize),
+                        Global.Colors.Main1);
+                    screenSpriteBatch.Draw(
+                        dice,
+                        new Rectangle(new Point(1500 + 48 + 18 + 5 * 48, sliderHeight),
+                        Global.SpriteSize.Multiply(3)),
+                        new Rectangle(new Point((6 - (statValue)) * 16, 0),
+                        Global.SpriteSize),
+                        Global.Colors.Main1);
+                }
+            }
         }
 
         public void Reset()

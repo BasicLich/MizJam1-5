@@ -34,6 +34,9 @@
     <None Update="Content\Levels\Level1.tmx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Content\Levels\Level2.tmx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Content\Levels\test.tmx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

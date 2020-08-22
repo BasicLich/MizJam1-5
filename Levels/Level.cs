@@ -14,12 +14,22 @@ namespace MizJam1.Levels
 {
     public class Level
     {
+        private readonly Random rand = new Random();
         private readonly List<Cell[,]> layers;
         private readonly Unit[,] units;
         private float animationTimer = 0;
         private readonly MizJam1Game game;
 
         private UIMenu dialog;
+
+        public Unit SelectedUnit { get; set; }
+        private HashSet<Point> canGoPositions;
+        private Dictionary<Point, ThreatenedCell> threatenedPositions;
+        public Cell MouseOverCell { get; set; }
+        public Unit MouseOverUnit { get; set; }
+        public Point Size { get; private set; }
+        public int Width => Size.X;
+        public int Height => Size.Y;
 
         public Level(XDocument levelData, MizJam1Game game)
         {
@@ -61,15 +71,6 @@ namespace MizJam1.Levels
                 }
             }
         }
-
-        public Unit SelectedUnit { get; set; }
-        private HashSet<Point> canGoPositions;
-        private Dictionary<Point, ThreatenedCell> threatenedPositions;
-        public Cell MouseOverCell { get; set; }
-        public Unit MouseOverUnit { get; set; }
-        public Point Size { get; private set; }
-        public int Width => Size.X;
-        public int Height => Size.Y;
 
         private Cell[,] ParseLayer(string layerData)
         {
@@ -184,6 +185,9 @@ namespace MizJam1.Levels
                 case MizJam1Game.GameStates.OpenDialog:
                     OpenDialogLeftClick(worldPosition, screenPosition);
                     break;
+                case MizJam1Game.GameStates.SelectAttack:
+                    ChooseAttackLeftClick(worldPosition);
+                    break;
                 case MizJam1Game.GameStates.DefensePhase:
                     break;
                 default:
@@ -215,14 +219,14 @@ namespace MizJam1.Levels
                     {
                         canGoPositions = new HashSet<Point>() { position };
                         canGoPositions.Remove(SelectedUnit.Position);
-                        threatenedPositions = GetThreathenSpaces(new HashSet<Point>() { position }, SelectedUnit);
+                        threatenedPositions = GetThreatenSpaces(new HashSet<Point>() { position }, SelectedUnit);
                         OpenDialog(position, screenPosition);
                         return;
                     }
                     else if (position == SelectedUnit.Position)
                     {
                         canGoPositions = new HashSet<Point>();
-                        threatenedPositions = GetThreathenSpaces(new HashSet<Point>() { position }, SelectedUnit);
+                        threatenedPositions = GetThreatenSpaces(new HashSet<Point>() { position }, SelectedUnit);
                         OpenDialog(position, screenPosition);
                         return;
                     }
@@ -241,7 +245,7 @@ namespace MizJam1.Levels
                             canGoPositions.Remove(unit.Position);
                         }
                     }
-                    threatenedPositions = GetThreathenSpaces(canGoPositions, SelectedUnit);
+                    threatenedPositions = GetThreatenSpaces(canGoPositions, SelectedUnit);
 
                     canGoPositions.Remove(new Point(position.X, position.Y));
                     threatenedPositions.Remove(new Point(position.X, position.Y));
@@ -266,21 +270,27 @@ namespace MizJam1.Levels
             };
             Unit enemy;
 
-            bool isAttack = false;
+            bool attackDirectly = false;
             if ((enemy = GetUnit(cellClicked)) != null && enemy.Enemy)
             {
                 UIImage attack = new UIImage(game.Dialogs[MizJam1Game.Actions.Attack], game.SelectedDialogs[MizJam1Game.Actions.Attack]);
+                Point moveTarget = threatenedPositions[cellClicked].From;
+                MoveUnitCommand moveUnit = new MoveUnitCommand(this, SelectedUnit.Position, moveTarget);
+                MoveAndAttackCommand moveAndAttackCommand = new MoveAndAttackCommand(moveUnit, this, SelectedUnit, enemy);
+                attack.AddCommand(moveAndAttackCommand);
                 dialog.AddChild(attack);
-                isAttack = true;
+                attackDirectly = true;
             }
 
-            if (!isAttack)
+            if (!attackDirectly)
             {
                 foreach (var threat in threatenedPositions)
                 {
                     if ((enemy = GetUnit(threat.Key)) != null && enemy.Enemy)
                     {
                         UIImage attackSelect = new UIImage(game.Dialogs[MizJam1Game.Actions.Attack], game.SelectedDialogs[MizJam1Game.Actions.Attack]);
+                        SelectAttackCommand selectAttackCommand = new SelectAttackCommand(this);
+                        attackSelect.AddCommand(selectAttackCommand);
                         dialog.AddChild(attackSelect);
                         break;
                     }
@@ -290,48 +300,63 @@ namespace MizJam1.Levels
             if (cellClicked == SelectedUnit.Position)
             {
                 UIImage defend = new UIImage(game.Dialogs[MizJam1Game.Actions.Defend], game.SelectedDialogs[MizJam1Game.Actions.Defend]);
+                DefendCommand defendCommand = new DefendCommand(this, SelectedUnit.Position);
+                defend.AddCommand(defendCommand);
                 dialog.AddChild(defend);
             }
-
+            MoveUnitCommand moveCommand = null;
             if (canGoPositions.Contains(cellClicked))
             {
                 UIImage move = new UIImage(game.Dialogs[MizJam1Game.Actions.Move], game.SelectedDialogs[MizJam1Game.Actions.Move]);
-                MoveUnitCommand moveCommand = new MoveUnitCommand(this, SelectedUnit.Position, cellClicked);
+                moveCommand = new MoveUnitCommand(this, SelectedUnit.Position, cellClicked);
                 move.AddCommand(moveCommand);
                 dialog.AddChild(move);
                 canGoPositions = new HashSet<Point>() { cellClicked };
             }
 
-            if (!isAttack)
+            if (!attackDirectly)
             {
                 UIImage reroll = new UIImage(game.Dialogs[MizJam1Game.Actions.Reroll], game.SelectedDialogs[MizJam1Game.Actions.Reroll]);
+                if (moveCommand == null)
+                {
+                    moveCommand = new MoveUnitCommand(this, SelectedUnit.Position, SelectedUnit.Position);
+                }
+                ICommand rerollCommand = new MoveAndRerollCommand(moveCommand, SelectedUnit);
+                reroll.AddCommand(rerollCommand);
                 dialog.AddChild(reroll);
             }
 
             if (cellClicked == SelectedUnit.Position)
             {
                 UIImage wait = new UIImage(game.Dialogs[MizJam1Game.Actions.Wait], game.SelectedDialogs[MizJam1Game.Actions.Wait]);
+                WaitCommand waitCommand = new WaitCommand(this, cellClicked);
+                wait.AddCommand(waitCommand);
                 dialog.AddChild(wait);
             }
 
             UIImage cancel = new UIImage(game.Dialogs[MizJam1Game.Actions.Cancel], game.SelectedDialogs[MizJam1Game.Actions.Cancel]);
+            ICommand cancelCommand = new CancelCommand(this);
+            cancel.AddCommand(cancelCommand);
             dialog.AddChild(cancel);
 
             dialog.SetScale(3);
 
             if (dialog.Position.X + dialog.Size.X > 1500)
             {
-                dialog.Position = new Point(1500 - dialog.Size.X, dialog.Position.Y);
+                dialog.Position = new Point(screenPosition.X - dialog.Size.X, dialog.Position.Y);
             }
             if (dialog.Position.Y + dialog.Size.Y > 1080)
             {
-                dialog.Position = new Point(dialog.Position.X, 1080 - dialog.Size.Y);
+                dialog.Position = new Point(dialog.Position.X, screenPosition.Y - dialog.Size.Y);
             }
-
         }
 
         private void OpenDialogLeftClick(Point worldPosition, Point screenPosition)
         {
+            if (game.GameState == MizJam1Game.GameStates.OpenDialog)
+            {
+                game.GameState = MizJam1Game.GameStates.FightPhase;
+            }
             if (dialog.Contains(screenPosition))
             {
                 dialog.Execute();
@@ -341,8 +366,30 @@ namespace MizJam1.Levels
                 dialog = null;
                 FightPhaseLeftClick(worldPosition, screenPosition);
             }
-            game.GameState = MizJam1Game.GameStates.FightPhase;
+
             dialog = null;
+        }
+
+        private void ChooseAttackLeftClick(Point worldPosition)
+        {
+            game.GameState = MizJam1Game.GameStates.FightPhase;
+
+            Point cell = WorldToCell(worldPosition);
+            if (!threatenedPositions.ContainsKey(cell))
+            {
+                Cancel();
+
+                return;
+            }
+
+            Unit unit = SelectedUnit;
+            Point moveDestination = SelectedUnit.Position;
+            if(canGoPositions.Any())
+            {
+                moveDestination = canGoPositions.First();
+            }
+            MoveUnit(unit.Position, moveDestination);
+            Attack(unit.Position, cell);
         }
 
         private void UnselectUnit()
@@ -358,16 +405,90 @@ namespace MizJam1.Levels
 
         public void MoveUnit(Point unitPos, Point destination)
         {
-            units[destination.Y, destination.X] = units[unitPos.Y, unitPos.X];
+            Unit unit = units[unitPos.Y, unitPos.X];
             units[unitPos.Y, unitPos.X] = null;
-            units[destination.Y, destination.X].Position = destination;
-            units[destination.Y, destination.X].Acted = true;
+            units[destination.Y, destination.X] = unit;
+            unit.Position = destination;
+            unit.Acted = true;
 
             UnselectUnit();
             UnselectTiles();
         }
 
-        private Dictionary<Point, ThreatenedCell> GetThreathenSpaces(HashSet<Point> reach, Unit unit)
+        public void AttackSelect()
+        {
+            foreach (var threat in threatenedPositions.ToList())
+            {
+                if (GetUnit(threat.Key) == null)
+                {
+                    threatenedPositions.Remove(threat.Key);
+                }
+            }
+
+            game.GameState = MizJam1Game.GameStates.SelectAttack;
+        }
+
+        public void Attack(Point attackingUnit, Point defendingUnit)
+        {
+            Unit att = GetUnit(attackingUnit);
+            Unit def = GetUnit(defendingUnit);
+
+            ushort baseAtt = att.Stats[Stats.Attack];
+            bool isMagic = false;
+            if (att.Stats[Stats.Magic] > baseAtt)
+            {
+                isMagic = true;
+                baseAtt = att.Stats[Stats.Magic];
+            }
+            int damage = baseAtt + rand.Next(1, 7);
+
+            ushort baseDef = def.Defending ? (ushort)7 : (isMagic ? def.Stats[Stats.MagicDefense] : def.Stats[Stats.Defense]);
+            int defense = baseDef + rand.Next(1, 7);
+
+            int res = Math.Abs(damage - defense);
+            if (def.Health <= res)
+            {
+                units[def.Position.Y, def.Position.X] = null;
+            }
+            else
+            {
+                def.Health -= (ushort)res;
+            }
+
+            att.Acted = true;
+
+            UnselectUnit();
+            UnselectTiles();
+        }
+
+        public void Defend(Point defendingUnit)
+        {
+            Unit unit = GetUnit(defendingUnit);
+            unit.Defending = true;
+            unit.Acted = true;
+
+            UnselectUnit();
+            UnselectTiles();
+        }
+
+        public void Wait(Point waitingUnit)
+        {
+            Unit unit = GetUnit(waitingUnit);
+            unit.Acted = true;
+
+            UnselectUnit();
+            UnselectTiles();
+        }
+
+        public void Cancel()
+        {
+            SelectedUnit = null;
+            game.GameState = MizJam1Game.GameStates.FightPhase;
+            canGoPositions = null;
+            threatenedPositions = null;
+        }
+
+        private Dictionary<Point, ThreatenedCell> GetThreatenSpaces(HashSet<Point> reach, Unit unit)
         {
             var threathenedSpaces = new Dictionary<Point, ThreatenedCell>();
 
@@ -440,6 +561,7 @@ namespace MizJam1.Levels
 
             return hashset;
         }
+
         /// <summary>
         /// Recursive function that gets the accessible cells for the given range
         /// </summary>
@@ -482,8 +604,74 @@ namespace MizJam1.Levels
 
         public void Update(GameTime gameTime)
         {
+            if (game.GameState == MizJam1Game.GameStates.FightPhase && TurnFinished(false))
+            {
+                game.GameState = MizJam1Game.GameStates.DefensePhase;
+                WakeUpUnits(true);
+                DoEnemyTurn();
+            }
+            else if (game.GameState == MizJam1Game.GameStates.DefensePhase && TurnFinished(true))
+            {
+                game.GameState = MizJam1Game.GameStates.FightPhase;
+                WakeUpUnits(false);
+            }
+
             animationTimer += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             if (animationTimer > 256000) animationTimer -= 256000;
+        }
+
+        private bool TurnFinished(bool enemyTurn)
+        {
+            foreach (var unit in units)
+            {
+                if (unit != null && unit.Enemy == enemyTurn && !unit.Acted)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public bool LevelFinished
+        {
+            get
+            {
+
+                foreach (var unit in units)
+                {
+                    if (unit != null && unit.Enemy)
+                    {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            }
+        }
+
+        private void WakeUpUnits(bool enemies)
+        {
+            foreach (var unit in units)
+            {
+                if (unit == null) continue;
+                unit.Acted = false;
+                if (enemies == unit.Enemy)
+                {
+                    unit.Defending = false;
+                }
+            }
+        }
+
+        private void DoEnemyTurn()
+        {
+            foreach (var unit in units)
+            {
+                if (unit != null && unit.Enemy)
+                {
+                    Defend(unit.Position);
+                }
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch, SpriteBatch screenSpriteBatch, Texture2D[] textures)

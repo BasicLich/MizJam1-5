@@ -11,19 +11,27 @@ namespace MizJam1.Units
         {
             ["Warrior"] = new UnitClass("Warrior", (Attack, Defense), new Dictionary<Stats, ushort>()
             {
-                [MaxHealth] = 10,
+                [MaxHealth] = 14,
                 [Magic] = 0,
-                [MagicDefense] = 3,
+                [MagicDefense] = 2,
                 [Stats.Range] = 0,
                 [Speed] = 4
             }),
             ["Ranger"] = new UnitClass("Ranger", (Attack, Stats.Range), new Dictionary<Stats, ushort>()
             {
-                [MaxHealth] = 10,
-                [Defense] = 0,
+                [MaxHealth] = 12,
+                [Defense] = 3,
                 [Magic] = 0,
                 [MagicDefense] = 3,
                 [Speed] = 4
+            }),
+            ["Mage"] = new UnitClass("Mage", (Magic, Speed), new Dictionary<Stats, ushort>()
+            {
+                [MaxHealth] = 10,
+                [Attack] = 0,
+                [Defense] = 1,
+                [MagicDefense] = 4,
+                [Stats.Range] = 2
             }),
             ["Zombie"] = new UnitClass("Zombie", (Defense, MagicDefense), new Dictionary<Stats, ushort>()
             {

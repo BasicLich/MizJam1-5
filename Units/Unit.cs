@@ -15,6 +15,8 @@ namespace MizJam1.Units
         const uint FLIPPED_DIAGONALLY_FLAG = 0x20000000;
         const float ROTATION_RADIANS = (float)(90 * Math.PI / 180);
 
+        private static readonly Random rand = new Random();
+
         public Unit(uint id, string name, UnitClass unitClass, bool enemy)
         {
             ID = id & ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
@@ -24,10 +26,10 @@ namespace MizJam1.Units
             Name = name;
             UnitClass = unitClass;
 
-            Stats = UnitClass.DefaultStatsValue;
-            Stats[UnitClass.OppositeStats.Item1] = 4;
-            Stats[UnitClass.OppositeStats.Item2] = 3;
+            Stats = UnitClass.GetStats((ushort)rand.Next(1,7));
             Enemy = enemy;
+
+            Health = Stats[MaxHealth];
 
             Acted = false;
         }
@@ -38,6 +40,7 @@ namespace MizJam1.Units
         public string Name { get; set; }
         public UnitClass UnitClass { get; set; }
         public bool Enemy { get; set; }
+        public bool Ally { get => !Enemy; set => Enemy = !value; }
 
         public float Rotation => FlippedDiagonally ? ROTATION_RADIANS : 0f;
         public bool FlippedDiagonally { get; set; }
@@ -46,8 +49,14 @@ namespace MizJam1.Units
 
         public Point Position { get; set; }
         public bool Acted { get; set; }
+        public bool Defending { get; set; }
 
         private ushort health;
         public ushort Health { get { return health; } set { if (value < Stats[MaxHealth]) health = value; else health = Stats[MaxHealth]; } }
+
+        public void Reroll()
+        {
+            Stats = UnitClass.GetStats((ushort)rand.Next(1,7));
+        }
     }
 }

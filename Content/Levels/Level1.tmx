@@ -55,7 +55,7 @@
  <objectgroup id="2" name="Player">
   <object id="1" name="George" type="Warrior" gid="3196" x="208.389" y="304.069" width="16" height="16"/>
   <object id="4" name="Jeff" type="Ranger" gid="3247" x="191.6" y="303.803" width="16" height="16"/>
-  <object id="7" name="Jeff2" type="Ranger" gid="3247" x="209.988" y="30.3744" width="16" height="16"/>
+  <object id="7" name="Jeff2" type="Mage" gid="3241" x="209.988" y="30.3744" width="16" height="16"/>
  </objectgroup>
  <objectgroup id="4" name="Enemy">
   <object id="2" name="mmmmmm" type="Zombie" gid="3485" x="95.9307" y="48.2398" width="16" height="16"/>
