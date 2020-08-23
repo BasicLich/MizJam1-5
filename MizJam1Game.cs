@@ -165,7 +165,7 @@ namespace MizJam1
                 XDocument levelDoc = XDocument.Parse(File.ReadAllText(levelFiles[i]));
                 levels[i] = new Level(levelDoc, this);
             }
-            currentLevel = levels[2];
+            currentLevel = levels[0];
             camera = new Camera(1080, 1080, currentLevel.Width, currentLevel.Height);
 
             mainMenu = new UIContainer(Point.Zero, new Point(1920, 1080), true);
