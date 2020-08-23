@@ -1,5 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MizJam1.Rendering;
 using MizJam1.Units;
+using MizJam1.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -26,7 +29,7 @@ namespace MizJam1.Units
             Name = name;
             UnitClass = unitClass;
 
-            Stats = UnitClass.GetStats((ushort)rand.Next(1,7));
+            Stats = UnitClass.GetStats((ushort)rand.Next(1, 7));
             Enemy = enemy;
 
             Health = Stats[MaxHealth];
@@ -50,13 +53,21 @@ namespace MizJam1.Units
         public Point Position { get; set; }
         public bool Acted { get; set; }
         public bool Defending { get; set; }
+        public bool Hide { get; set; }
 
         private ushort health;
         public ushort Health { get { return health; } set { if (value < Stats[MaxHealth]) health = value; else health = Stats[MaxHealth]; } }
 
         public void Reroll()
         {
-            Stats = UnitClass.GetStats((ushort)rand.Next(1,7));
+            Stats = UnitClass.GetStats((ushort)rand.Next(1, 7));
+        }
+
+        public Sprite GetSprite(Texture2D[] gameTextures)
+        {
+            Sprite sprite = new Sprite(gameTextures[TextureIDInterpreter.GetTextureID(ID)], Global.UnitSize, TextureIDInterpreter.GetUnitSourceRectangle(ID), Enemy ? Global.Colors.Accent4 : Global.Colors.Accent2);
+
+            return sprite;
         }
     }
 }

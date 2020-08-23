@@ -9,6 +9,8 @@ using MizJam1.Units;
 using MizJam1.Utilities;
 using MizJam1.UIComponents;
 using MizJam1.UIComponents.Commands;
+using MizJam1.Animations;
+using MizJam1.Rendering;
 
 namespace MizJam1.Levels
 {
@@ -19,6 +21,8 @@ namespace MizJam1.Levels
         private readonly Unit[,] units;
         private float animationTimer = 0;
         private readonly MizJam1Game game;
+        private readonly AnimationQueue animationQueue;
+        private MizJam1Game.GameStates oldState;
 
         private UIMenu dialog;
 
@@ -70,6 +74,8 @@ namespace MizJam1.Levels
                     units[pos.Y, pos.X] = unit;
                 }
             }
+
+            animationQueue = new AnimationQueue();
         }
 
         private Cell[,] ParseLayer(string layerData)
@@ -236,15 +242,6 @@ namespace MizJam1.Levels
                 if (SelectedUnit != null && !SelectedUnit.Acted)
                 {
                     canGoPositions = GetAccessiblePoints(SelectedUnit);
-
-                    foreach (var unit in units)
-                    {
-                        if (unit == null) continue;
-                        if (unit.Enemy == SelectedUnit.Enemy && unit != SelectedUnit)
-                        {
-                            canGoPositions.Remove(unit.Position);
-                        }
-                    }
                     threatenedPositions = GetThreatenSpaces(canGoPositions, SelectedUnit);
 
                     canGoPositions.Remove(new Point(position.X, position.Y));
@@ -364,7 +361,9 @@ namespace MizJam1.Levels
             else
             {
                 dialog = null;
-                FightPhaseLeftClick(worldPosition, screenPosition);
+                UnselectUnit();
+                UnselectTiles();
+                LeftClick(worldPosition, screenPosition);
             }
 
             dialog = null;
@@ -384,7 +383,7 @@ namespace MizJam1.Levels
 
             Unit unit = SelectedUnit;
             Point moveDestination = SelectedUnit.Position;
-            if(canGoPositions.Any())
+            if (canGoPositions.Any())
             {
                 moveDestination = canGoPositions.First();
             }
@@ -406,9 +405,18 @@ namespace MizJam1.Levels
         public void MoveUnit(Point unitPos, Point destination)
         {
             Unit unit = units[unitPos.Y, unitPos.X];
-            units[unitPos.Y, unitPos.X] = null;
-            units[destination.Y, destination.X] = unit;
-            unit.Position = destination;
+
+            if (unitPos != destination)
+            {
+                Color color = unit.Enemy ? Global.Colors.Accent4 : Global.Colors.Accent2;
+                float length = 0.1f * MathExtensions.CellDistance(unitPos, destination);
+                animationQueue.Add(new MoveAnimation(CellToWorld(unitPos).Add(1), CellToWorld(destination).Add(1), unit.GetSprite(game.Textures), length), unit);
+
+                units[unitPos.Y, unitPos.X] = null;
+                units[destination.Y, destination.X] = unit;
+                unit.Position = destination;
+            }
+
             unit.Acted = true;
 
             UnselectUnit();
@@ -440,14 +448,26 @@ namespace MizJam1.Levels
                 isMagic = true;
                 baseAtt = att.Stats[Stats.Magic];
             }
-            int damage = baseAtt + rand.Next(1, 7);
+            int diceResult = rand.Next(1, 7);
+
+            RollDiceAnimation rollDiceAnimation = new RollDiceAnimation(game.RedDice, CellToWorld(att.Position).Add(0, Global.SpriteHeight), (ushort)diceResult, baseAtt, true);
+            animationQueue.Add(rollDiceAnimation, null);
+
+            int damage = baseAtt + diceResult;
 
             ushort baseDef = def.Defending ? (ushort)7 : (isMagic ? def.Stats[Stats.MagicDefense] : def.Stats[Stats.Defense]);
-            int defense = baseDef + rand.Next(1, 7);
+            diceResult = rand.Next(1, 7);
 
-            int res = Math.Abs(damage - defense);
+            rollDiceAnimation = new RollDiceAnimation(game.BlueDice, CellToWorld(def.Position).Add(0, Global.SpriteHeight), (ushort)diceResult, baseDef, true);
+            animationQueue.Add(rollDiceAnimation, null);
+
+            int defense = baseDef + diceResult;
+
+            int res = Math.Max(0, damage - defense);
             if (def.Health <= res)
             {
+                DeathAnimation deathAnimation = new DeathAnimation(CellToWorld(def.Position).Add(1), def.GetSprite(game.Textures));
+                animationQueue.Add(deathAnimation, def);
                 units[def.Position.Y, def.Position.X] = null;
             }
             else
@@ -556,8 +576,17 @@ namespace MizJam1.Levels
         private HashSet<Point> GetAccessiblePoints(Unit unit)
         {
             Dictionary<Point, int> result = new Dictionary<Point, int>();
-            GetAccessiblePoints(unit.Position, unit.Stats[Stats.Speed] * 20, result);
+            GetAccessiblePoints(unit.Position, unit.Stats[Stats.Speed] * 20, result, unit);
             var hashset = result.Keys.ToHashSet();
+
+            foreach (var u in units)
+            {
+                if (u == null) continue;
+                if (u.Enemy == unit.Enemy && u != unit)
+                {
+                    hashset.Remove(u.Position);
+                }
+            }
 
             return hashset;
         }
@@ -568,7 +597,7 @@ namespace MizJam1.Levels
         /// <param name="position"></param>
         /// <param name="rangeLeft"></param>
         /// <param name="result"></param>
-        private void GetAccessiblePoints(Point position, int rangeLeft, Dictionary<Point, int> result)
+        private void GetAccessiblePoints(Point position, int rangeLeft, Dictionary<Point, int> result, Unit unit)
         {
             if (rangeLeft < 0)
             {
@@ -580,45 +609,29 @@ namespace MizJam1.Levels
             }
             result[position] = rangeLeft;
 
-            CheckAndAddCell(new Point(position.X - 1, position.Y), rangeLeft, result);
-            CheckAndAddCell(new Point(position.X + 1, position.Y), rangeLeft, result);
-            CheckAndAddCell(new Point(position.X, position.Y - 1), rangeLeft, result);
-            CheckAndAddCell(new Point(position.X, position.Y + 1), rangeLeft, result);
+            CheckAndAddCell(new Point(position.X - 1, position.Y), rangeLeft, result, unit);
+            CheckAndAddCell(new Point(position.X + 1, position.Y), rangeLeft, result, unit);
+            CheckAndAddCell(new Point(position.X, position.Y - 1), rangeLeft, result, unit);
+            CheckAndAddCell(new Point(position.X, position.Y + 1), rangeLeft, result, unit);
 
             return;
         }
 
-        private void CheckAndAddCell(Point position, int rangeLeft, Dictionary<Point, int> result)
+        private void CheckAndAddCell(Point position, int rangeLeft, Dictionary<Point, int> result, Unit unit)
         {
             var cell = GetCell(position);
             if (cell.ID != 0 && !cell.Properties.IsSolid)
             {
-                Unit unit;
-                if ((unit = GetUnit(position)) != null && SelectedUnit.Enemy != unit.Enemy) //Can't pass through enemy units
+                Unit otherUnit;
+                if ((otherUnit = GetUnit(position)) != null && unit.Enemy != otherUnit.Enemy) //Can't pass through the other team's units
                 {
                     return;
                 }
-                GetAccessiblePoints(position, rangeLeft - cell.Properties.Difficulty, result);
+                GetAccessiblePoints(position, rangeLeft - cell.Properties.Difficulty, result, unit);
             }
         }
 
-        public void Update(GameTime gameTime)
-        {
-            if (game.GameState == MizJam1Game.GameStates.FightPhase && TurnFinished(false))
-            {
-                game.GameState = MizJam1Game.GameStates.DefensePhase;
-                WakeUpUnits(true);
-                DoEnemyTurn();
-            }
-            else if (game.GameState == MizJam1Game.GameStates.DefensePhase && TurnFinished(true))
-            {
-                game.GameState = MizJam1Game.GameStates.FightPhase;
-                WakeUpUnits(false);
-            }
 
-            animationTimer += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
-            if (animationTimer > 256000) animationTimer -= 256000;
-        }
 
         private bool TurnFinished(bool enemyTurn)
         {
@@ -667,22 +680,97 @@ namespace MizJam1.Levels
         {
             foreach (var unit in units)
             {
-                if (unit != null && unit.Enemy)
+                if (unit != null && unit.Enemy && !unit.Acted)
                 {
-                    Defend(unit.Position);
+                    HashSet<Point> canGo = GetAccessiblePoints(unit);
+                    Dictionary<Point, ThreatenedCell> threat = GetThreatenSpaces(canGo, unit);
+                    Dictionary<Point, Unit> otherUnits = new Dictionary<Point, Unit>();
+                    foreach (var cell in threat)
+                    {
+                        Unit otherUnit;
+                        if ((otherUnit = GetUnit(cell.Key)) != null && otherUnit.Enemy != unit.Enemy)
+                        {
+                            otherUnits[cell.Value.From] = otherUnit;
+                        }
+                    }
+
+                    if (otherUnits.Any())
+                    {
+                        var unitToAttack = rand.RandomFromDictionary(otherUnits);
+                        MoveUnit(unit.Position, unitToAttack.Key);
+                        Attack(unit.Position, unitToAttack.Value.Position);
+                    }
+
+                    if (!unit.Acted)
+                    {
+                        int action = rand.Next(4);
+                        if (action == 3 && canGo.Count == 0)
+                        {
+                            action = rand.Next(3);
+                        }
+                        switch (action)
+                        {
+                            case 0:
+                                Defend(unit.Position);
+                                break;
+                            case 1:
+                                Wait(unit.Position);
+                                break;
+                            case 2:
+                                unit.Reroll();
+                                unit.Acted = true;
+                                break;
+                            case 3:
+                                MoveUnit(unit.Position, rand.RandomFromList(canGo.ToList()));
+                                break;
+                        }
+                    }
                 }
             }
         }
-
-        public void Draw(SpriteBatch spriteBatch, SpriteBatch screenSpriteBatch, Texture2D[] textures)
+        public void Update(GameTime gameTime)
         {
-            DrawCells(spriteBatch, textures);
+            if (!animationQueue.Done)
+            {
+                animationQueue.Update(gameTime);
+                if (game.GameState != MizJam1Game.GameStates.AnimationsPlaying)
+                {
+                    oldState = game.GameState;
+                    game.GameState = MizJam1Game.GameStates.AnimationsPlaying;
+                }
+            }
+            else if (game.GameState == MizJam1Game.GameStates.AnimationsPlaying)
+            {
+                game.GameState = oldState;
+            }
+
+            if (game.GameState == MizJam1Game.GameStates.FightPhase && TurnFinished(false))
+            {
+                game.GameState = MizJam1Game.GameStates.DefensePhase;
+                WakeUpUnits(true);
+                DoEnemyTurn();
+            }
+            else if (game.GameState == MizJam1Game.GameStates.DefensePhase && TurnFinished(true))
+            {
+                game.GameState = MizJam1Game.GameStates.FightPhase;
+                WakeUpUnits(false);
+            }
+
+            animationTimer += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+            if (animationTimer > 256000) animationTimer -= 256000;
+        }
+
+
+        public void Draw(SpriteBatch spriteBatch, SpriteBatch screenSpriteBatch)
+        {
+            DrawCells(spriteBatch);
             DrawAreaTiles(spriteBatch);
-            DrawUnits(spriteBatch, textures);
+            DrawUnits(spriteBatch);
+            animationQueue.Draw(spriteBatch);
             DrawUI(screenSpriteBatch);
         }
 
-        private void DrawCells(SpriteBatch spriteBatch, Texture2D[] textures)
+        private void DrawCells(SpriteBatch spriteBatch)
         {
             foreach (var layer in layers)
             {
@@ -697,7 +785,7 @@ namespace MizJam1.Levels
                         }
                         Vector2 origin = new Vector2(Global.SpriteWidth / 2, Global.SpriteHeight / 2);
                         spriteBatch.Draw(
-                            textures[TextureIDInterpreter.GetTextureID(cell.ID)],
+                            game.Textures[TextureIDInterpreter.GetTextureID(cell.ID)],
                             new Rectangle(j * Global.SpriteWidth + (int)origin.X, i * Global.SpriteHeight + (int)origin.Y, Global.SpriteWidth, Global.SpriteHeight),
                             TextureIDInterpreter.GetSourceRectangle(cell.ID),
                             Color.White,
@@ -739,7 +827,7 @@ namespace MizJam1.Levels
             }
         }
 
-        private void DrawUnits(SpriteBatch spriteBatch, Texture2D[] textures)
+        private void DrawUnits(SpriteBatch spriteBatch)
         {
             int animation = ((int)animationTimer) / 500 % 2;
 
@@ -758,7 +846,7 @@ namespace MizJam1.Levels
                 for (int j = 0; j < Width; j++)
                 {
                     Unit unit = units[i, j];
-                    if (unit == null) continue;
+                    if (unit == null || unit.Hide) continue;
                     Color color1 = Global.Colors.Accent3;
                     Color color2 = Global.Colors.Accent2;
                     if (unit.Enemy)
@@ -772,11 +860,12 @@ namespace MizJam1.Levels
                         currColor = color2;
                     }
 
-                    Vector2 origin = new Vector2(Global.SpriteWidth / 2, Global.SpriteHeight / 2);
+                    Vector2 origin = new Vector2(Global.UnitWidth / 2, Global.UnitHeight / 2);
+
                     spriteBatch.Draw(
-                            textures[TextureIDInterpreter.GetTextureID(unit.ID)],
-                            new Rectangle(j * Global.SpriteWidth + (int)origin.X, i * Global.SpriteHeight + (int)origin.Y, Global.SpriteWidth, Global.SpriteHeight),
-                            TextureIDInterpreter.GetSourceRectangle(unit.ID),
+                            game.Textures[TextureIDInterpreter.GetTextureID(unit.ID)],
+                            new Rectangle(j * Global.SpriteWidth + (int)origin.X + 1, i * Global.SpriteHeight + (int)origin.Y + 1, Global.SpriteWidth - 2, Global.SpriteHeight - 2),
+                            TextureIDInterpreter.GetUnitSourceRectangle(unit.ID),
                             currColor,
                             unit.Rotation,
                             origin,

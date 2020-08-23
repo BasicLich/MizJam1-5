@@ -10,6 +10,9 @@ namespace MizJam1
         public static readonly int SpriteWidth = 16;
         public static readonly int SpriteHeight = 16;
         public static readonly Point SpriteSize = new Point(SpriteWidth, SpriteHeight);
+        public static readonly int UnitWidth = SpriteWidth - 2;
+        public static readonly int UnitHeight = SpriteHeight - 2;
+        public static readonly Point UnitSize = new Point(UnitWidth, UnitHeight);
         public static readonly int SpriteSheetWidth = 48;
         public static readonly int SpriteSheetHeight = 22;
         public static readonly int SpriteSheetCount = SpriteSheetWidth * SpriteSheetHeight;

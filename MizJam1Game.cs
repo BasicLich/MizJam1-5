@@ -26,7 +26,8 @@ namespace MizJam1
             FightPhase,
             OpenDialog,
             SelectAttack,
-            DefensePhase
+            DefensePhase,
+            AnimationsPlaying
         }
 
         public enum Actions
@@ -51,13 +52,15 @@ namespace MizJam1
         private SpriteFont mizjamBigFont;
         private SpriteFont mizjamSmallFont;
         private Texture2D whitePixel;
-        private Texture2D[] textures;
+        public Texture2D[] Textures { get; set; }
         private Texture2D windowBorder;
         public Texture2D TransparentTileSelect { get; set; }
         public Texture2D SelectedUnitBorder { get; set; }
         public Texture2D statSlider { get; set; }
         public Texture2D statSliderPin { get; set; }
-        public Texture2D dice { get; set; }
+        public Texture2D Dice { get; set; }
+        public Texture2D RedDice { get; set; }
+        public Texture2D BlueDice { get; set; }
         public Dictionary<Actions, Texture2D> Dialogs { get; set; }
         public Dictionary<Actions, Texture2D> SelectedDialogs { get; set; }
         private Level[] levels;
@@ -67,7 +70,7 @@ namespace MizJam1
         public MizJam1Game()
         {
             graphics = new GraphicsDeviceManager(this);
-            textures = new Texture2D[4];
+            Textures = new Texture2D[4];
             Content.RootDirectory = "Content";
             IsMouseVisible = false;
             GameState = GameStates.MainMenu;
@@ -107,10 +110,10 @@ namespace MizJam1
             mizjamSmallFont = Content.Load<SpriteFont>("Fonts/mizjam24");
             mizjamSmallFont.LineSpacing = mizjamSmallFont.LineSpacing + 5;
             whitePixel = Content.Load<Texture2D>("whitePixel");
-            textures[0] = Content.Load<Texture2D>("colored_packed");
-            textures[1] = Content.Load<Texture2D>("colored_transparent_packed");
-            textures[2] = Content.Load<Texture2D>("monochrome_packed");
-            textures[3] = Content.Load<Texture2D>("monochrome_transparent_packed");
+            Textures[0] = Content.Load<Texture2D>("colored_packed");
+            Textures[1] = Content.Load<Texture2D>("colored_transparent_packed");
+            Textures[2] = Content.Load<Texture2D>("monochrome_packed");
+            Textures[3] = Content.Load<Texture2D>("monochrome_transparent_packed");
             windowBorder = Content.Load<Texture2D>("Textures/WindowBorder");
             Dialogs[Actions.Move] = Content.Load<Texture2D>("Textures/Dialogs/MoveDialog");
             Dialogs[Actions.Attack] = Content.Load<Texture2D>("Textures/Dialogs/AttackDialog");
@@ -130,7 +133,9 @@ namespace MizJam1
             SelectedUnitBorder = Content.Load<Texture2D>("Textures/SelectedUnitBorder");
             statSlider = Content.Load<Texture2D>("Textures/Slider");
             statSliderPin = Content.Load<Texture2D>("Textures/SliderPin");
-            dice = Content.Load<Texture2D>("Textures/Dice");
+            Dice = Content.Load<Texture2D>("Textures/Dice");
+            RedDice = Content.Load<Texture2D>("Textures/SolidRedDice");
+            BlueDice = Content.Load<Texture2D>("Textures/SolidBlueDice");
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -253,7 +258,7 @@ namespace MizJam1
             //Draw debug world cursor position
             //screenSpriteBatch.DrawString(mainFont, camera.ScreenToWorld(MouseAdapter.Position.ToVector2()).ToString(), Vector2.Zero, Color.White);
             //Draw cursor
-            screenSpriteBatch.Draw(textures[1], new Rectangle(MouseAdapter.Position, new Point(32, 32)), new Rectangle(560, 160, 16, 16), Color.White);
+            screenSpriteBatch.Draw(Textures[1], new Rectangle(MouseAdapter.Position, new Point(32, 32)), new Rectangle(560, 160, 16, 16), Color.White);
             base.Draw(gameTime);
             mapSpriteBatch.End();
             screenSpriteBatch.End();
@@ -261,7 +266,7 @@ namespace MizJam1
 
         private void drawLevel()
         {
-            currentLevel.Draw(mapSpriteBatch, screenSpriteBatch, textures);
+            currentLevel.Draw(mapSpriteBatch, screenSpriteBatch);
             
             drawLeftWindow();
             drawRightWindow();
@@ -344,13 +349,13 @@ namespace MizJam1
                         Global.SpriteSize.Multiply(3)),
                         Color.White);
                     screenSpriteBatch.Draw(
-                        dice,
+                        Dice,
                         new Rectangle(new Point(1500 + 48 + 18, sliderHeight),
                         Global.SpriteSize.Multiply(3)), new Rectangle(new Point((statValue - 1) * 16, 16),
                         Global.SpriteSize),
                         Global.Colors.Main1);
                     screenSpriteBatch.Draw(
-                        dice,
+                        Dice,
                         new Rectangle(new Point(1500 + 48 + 18 + 5 * 48, sliderHeight),
                         Global.SpriteSize.Multiply(3)),
                         new Rectangle(new Point((6 - (statValue)) * 16, 0),
