@@ -27,7 +27,8 @@ namespace MizJam1
             OpenDialog,
             SelectAttack,
             DefensePhase,
-            AnimationsPlaying
+            AnimationsPlaying,
+            End
         }
 
         public enum Actions
@@ -49,6 +50,7 @@ namespace MizJam1
 
         private int levelIndex = 0;
 
+        private SpriteFont mizjamHugeFont;
         private SpriteFont mizjamBigFont;
         private SpriteFont mizjamSmallFont;
         private Texture2D whitePixel;
@@ -61,11 +63,21 @@ namespace MizJam1
         public Texture2D Dice { get; set; }
         public Texture2D RedDice { get; set; }
         public Texture2D BlueDice { get; set; }
+        public Texture2D YellowDice { get; set; }
+        public Texture2D LevelStart { get; set; }
+        public Texture2D LevelWon { get; set; }
+        public Texture2D LevelLost { get; set; }
+        public Texture2D YourTurn { get; set; }
+        public Texture2D TheirTurn { get; set; }
+        public Texture2D GameOver { get; set; }
+        public Texture2D Congrats { get; set; }
         public Dictionary<Actions, Texture2D> Dialogs { get; set; }
         public Dictionary<Actions, Texture2D> SelectedDialogs { get; set; }
         private Level[] levels;
         private Level currentLevel;
         private UIContainer mainMenu;
+        private UILabel bottomLabel;
+        private UILabel title;
 
         public MizJam1Game()
         {
@@ -86,7 +98,7 @@ namespace MizJam1
             GameState = GameStates.MainMenu;
 
             Window.AllowUserResizing = true;
-            Window.Title = "MizJam1 Game";
+            Window.Title = "Roll and Dice";
 
             graphics.PreferredBackBufferWidth = 1920;
             graphics.PreferredBackBufferHeight = 1080;
@@ -106,6 +118,7 @@ namespace MizJam1
             mapSpriteBatch = new SpriteBatch(GraphicsDevice);
             screenSpriteBatch = new SpriteBatch(GraphicsDevice);
 
+            mizjamHugeFont = Content.Load<SpriteFont>("Fonts/mizjam48");
             mizjamBigFont = Content.Load<SpriteFont>("Fonts/mizjam36");
             mizjamSmallFont = Content.Load<SpriteFont>("Fonts/mizjam24");
             mizjamSmallFont.LineSpacing = mizjamSmallFont.LineSpacing + 5;
@@ -136,6 +149,14 @@ namespace MizJam1
             Dice = Content.Load<Texture2D>("Textures/Dice");
             RedDice = Content.Load<Texture2D>("Textures/SolidRedDice");
             BlueDice = Content.Load<Texture2D>("Textures/SolidBlueDice");
+            YellowDice = Content.Load<Texture2D>("Textures/SolidYellowDice");
+            LevelStart = Content.Load<Texture2D>("Textures/LevelStartBanner");
+            LevelWon = Content.Load<Texture2D>("Textures/LevelWonBanner");
+            LevelLost = Content.Load<Texture2D>("Textures/LevelLostBanner");
+            YourTurn = Content.Load<Texture2D>("Textures/YourTurnBanner");
+            TheirTurn = Content.Load<Texture2D>("Textures/TheirTurnBanner");
+            GameOver = Content.Load<Texture2D>("Textures/GameOverBanner");
+            Congrats = Content.Load<Texture2D>("Textures/CongratulationsBanner");
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -144,7 +165,7 @@ namespace MizJam1
                 XDocument levelDoc = XDocument.Parse(File.ReadAllText(levelFiles[i]));
                 levels[i] = new Level(levelDoc, this);
             }
-            currentLevel = levels[0];
+            currentLevel = levels[2];
             camera = new Camera(1080, 1080, currentLevel.Width, currentLevel.Height);
 
             mainMenu = new UIContainer(Point.Zero, new Point(1920, 1080), true);
@@ -155,16 +176,39 @@ namespace MizJam1
             };
             UILabel startGame = new UILabel("START GAME", mizjamBigFont, Global.Colors.Main1) { SelectedTextColor = Global.Colors.Accent1 };
             startGame.AddCommand(new StartGameCommand(this));
+            UILabel restartLevel = new UILabel("RESTART LEVEL", mizjamBigFont, Global.Colors.Main1) { SelectedTextColor = Global.Colors.Accent1 };
+            restartLevel.AddCommand(new RestartLevelCommand(this));
+            /*
             UILabel options = new UILabel("OPTIONS", mizjamBigFont, Global.Colors.Main1) { SelectedTextColor = Global.Colors.Accent1 };
             options.AddCommand(new OpenOptionsCommand(this));
+            */
             UILabel exitGame = new UILabel("EXIT GAME", mizjamBigFont, Global.Colors.Main1) { SelectedTextColor = Global.Colors.Accent1 };
             exitGame.AddCommand(new ExitGameCommand(this));
 
             menu.AddChild(startGame);
-            menu.AddChild(options);
+            menu.AddChild(restartLevel);
+            //menu.AddChild(options);
             menu.AddChild(exitGame);
 
             mainMenu.AddChild(menu);
+
+            string message = "MADE BY TOURMI\nFOR MIZ GAME JAM 1";
+            bottomLabel = new UILabel(message, mizjamSmallFont, Global.Colors.Main1);
+            bottomLabel.Position = new Point(800, 1000);
+            string titleText = "ROLL AND DICE";
+            title = new UILabel(titleText, mizjamHugeFont, Global.Colors.Main1);
+            title.Position = new Point((1920 - mizjamHugeFont.MeasureString(titleText).ToPoint().X) / 2, 50);
+        }
+
+        public void RestartLevel()
+        {
+            GameState = GameStates.Playing;
+            currentLevel.Start();
+        }
+
+        public void RecalculateCamera()
+        {
+            camera = new Camera(1080, 1080, currentLevel.Width, currentLevel.Height);
         }
 
         protected override void Update(GameTime gameTime)
@@ -193,11 +237,7 @@ namespace MizJam1
                     mainMenu.Execute();
                 }
             }
-            else if (GameState == GameStates.Playing)
-            {
-                currentLevel.Start();
-            }
-            else
+            else if (GameState != GameStates.End)
             {
                 if (MouseAdapter.ScrollUp)
                     camera.Zoom += 0.5f;
@@ -224,14 +264,38 @@ namespace MizJam1
                 {
                     currentLevel.MouseOver(new Point(-10000, -10000), MouseAdapter.Position);
                 }
-            }
 
-            currentLevel.Update(gameTime);
-            if (currentLevel.LevelFinished)
+                currentLevel.Update(gameTime);
+                if (currentLevel.LevelFinished)
+                {
+                    levelIndex++;
+                    if (levelIndex < levels.Length)
+                    {
+                        currentLevel.Stop();
+                        currentLevel = levels[levelIndex];
+                        GameState = GameStates.Playing;
+                        currentLevel.Start();
+                    }
+                    else if (!currentLevel.IsGameOver)
+                    {
+                        currentLevel.GameOver();
+                    }
+                }
+                else if (currentLevel.LevelLost)
+                {
+                    currentLevel.Start();
+                }
+            }
+            else
             {
-                levelIndex++;
-                currentLevel = levels[levelIndex];
-                currentLevel.Start();
+                currentLevel.Update(gameTime);
+                if (currentLevel != null && GameState == GameStates.End)
+                {
+                    currentLevel.Stop();
+                    GameState = GameStates.MainMenu;
+                    levelIndex = 0;
+                    currentLevel = levels[levelIndex];
+                }
             }
 
             base.Update(gameTime);
@@ -245,7 +309,9 @@ namespace MizJam1
 
             if (GameState == GameStates.MainMenu)
             {
+                title.Draw(screenSpriteBatch);
                 mainMenu.Draw(screenSpriteBatch);
+                bottomLabel.Draw(screenSpriteBatch);
             }
             else
             {
@@ -266,8 +332,12 @@ namespace MizJam1
 
         private void drawLevel()
         {
+            if (!currentLevel.Started)
+            {
+                return;
+            }
             currentLevel.Draw(mapSpriteBatch, screenSpriteBatch);
-            
+
             drawLeftWindow();
             drawRightWindow();
         }

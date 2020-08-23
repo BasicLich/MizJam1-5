@@ -17,7 +17,7 @@ namespace MizJam1.Animations
         bool fullDice;
 
         float currTime;
-        const float time = 2f;
+        const float time = 1.5f;
         float changeDiceTime;
         int currDiceValue;
         int lastDiceValue;
@@ -38,6 +38,8 @@ namespace MizJam1.Animations
 
         public bool Done => currTime >= time;
 
+        public bool ScreenSpace => false;
+
         public void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(
@@ -50,7 +52,7 @@ namespace MizJam1.Animations
         public void Update(GameTime gameTime)
         {
             currTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (currTime < time / 2)
+            if (currTime < time *0.75)
             {
                 changeDiceTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (changeDiceTime >= 0.15f)

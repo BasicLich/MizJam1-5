@@ -88,6 +88,14 @@ namespace MizJam1.Utilities
         /// <param name="nb"></param>
         /// <returns>The new Point</returns>
         public static Point Sub(this Point p, int nb) => p - new Point(nb);
+
+        /// <summary>
+        /// Subtracts the given value from the Point.
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="nb"></param>
+        /// <returns>The new Point</returns>
+        public static Point Sub(this Point p, int x, int y) => p - new Point(x, y);
         /// <summary>
         /// Multiplies the Point by the given value.
         /// </summary>

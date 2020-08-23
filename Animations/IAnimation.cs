@@ -8,6 +8,8 @@ namespace MizJam1.Animations
 {
     public interface IAnimation
     {
+        bool ScreenSpace { get; }
+        bool LevelSpace => !ScreenSpace;
         bool DrawBeforeStart { get; }
         bool Done { get; }
         void Update(GameTime gameTime);

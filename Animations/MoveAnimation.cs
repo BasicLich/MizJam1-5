@@ -29,6 +29,8 @@ namespace MizJam1.Animations
 
         public bool Done => currTime >= time;
 
+        public bool ScreenSpace => false;
+
         public void Draw(SpriteBatch spriteBatch)
         {
             sprite.Draw(spriteBatch, startPoint + (displacement.ToVector2() * (currTime / time)).ToPoint());

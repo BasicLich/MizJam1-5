@@ -62,7 +62,7 @@ namespace MizJam1.Levels
 
             cellProperties[193] = solidTile;
             cellProperties[194] = solidTile;
-            cellProperties[195] = solidTile;
+            cellProperties[195] = tightTile;
             cellProperties[196] = solidTile;
             cellProperties[198] = solidTile;
             cellProperties[201] = waterTile;

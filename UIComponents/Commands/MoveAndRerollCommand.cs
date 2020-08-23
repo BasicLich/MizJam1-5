@@ -1,4 +1,5 @@
-﻿using MizJam1.Units;
+﻿using MizJam1.Levels;
+using MizJam1.Units;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,10 +8,13 @@ namespace MizJam1.UIComponents.Commands
 {
     public class MoveAndRerollCommand : ICommand
     {
+        private Level level;
         private Unit unit;
         private ICommand moveUnitCommand;
-        public MoveAndRerollCommand(MoveUnitCommand moveUnitCommand, Unit unit)
+
+        public MoveAndRerollCommand(MoveUnitCommand moveUnitCommand,Level level, Unit unit)
         {
+            this.level = level;
             this.unit = unit;
             this.moveUnitCommand = moveUnitCommand;
         }
@@ -18,8 +22,7 @@ namespace MizJam1.UIComponents.Commands
         public void Execute()
         {
             moveUnitCommand.Execute();
-            unit.Reroll();
-            unit.Acted = true;
+            level.Reroll(unit.Position);
         }
     }
 }

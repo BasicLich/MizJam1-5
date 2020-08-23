@@ -57,14 +57,32 @@ namespace MizJam1.Animations
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch)
+        public void Draw(SpriteBatch spriteBatch, SpriteBatch screenSpriteBatch)
         {
-            current?.Item1.Draw(spriteBatch);
             foreach (var animation in animations.ToList())
             {
                 if (animation.Item1.DrawBeforeStart)
                 {
-                    animation.Item1.Draw(spriteBatch);
+                    if (animation.Item1.LevelSpace)
+                    {
+                        animation.Item1.Draw(spriteBatch);
+                    }
+                    else
+                    {
+                        animation.Item1.Draw(screenSpriteBatch);
+                    }
+                }
+            }
+
+            if (current != null)
+            {
+                if (current.Value.Item1.LevelSpace)
+                {
+                    current?.Item1.Draw(spriteBatch);
+                }
+                else
+                {
+                    current?.Item1.Draw(screenSpriteBatch);
                 }
             }
         }
