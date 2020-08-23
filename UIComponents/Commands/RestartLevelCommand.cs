@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using MizJam1.Audio;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,8 @@ namespace MizJam1.UIComponents.Commands
 
         public void Execute()
         {
+            AudioManager.Instance.PlaySoundEffect("MenuClick", Vector2.Zero);
+
             game.RestartLevel();
         }
     }

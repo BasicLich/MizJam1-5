@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MizJam1.Audio;
 using MizJam1.Rendering;
 using MizJam1.Utilities;
 using System;
@@ -15,6 +16,8 @@ namespace MizJam1.Animations
         private readonly float time;
         private float currTime;
         private Sprite sprite;
+
+        private bool played = false;
 
         public MoveAnimation(Point startPoint, Point endPoint, Sprite sprite, float time = 1)
         {
@@ -38,6 +41,11 @@ namespace MizJam1.Animations
 
         public void Update(GameTime gameTime)
         {
+            if (!played)
+            {
+                AudioManager.Instance.PlaySoundEffect("Walk", Vector2.Zero);
+                played = true;
+            }
             currTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
     }

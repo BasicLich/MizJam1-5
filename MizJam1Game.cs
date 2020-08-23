@@ -1,6 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Media;
+using MizJam1.Audio;
 using MizJam1.Inputs;
 using MizJam1.Levels;
 using MizJam1.Rendering;
@@ -71,8 +74,8 @@ namespace MizJam1
         public Texture2D TheirTurn { get; set; }
         public Texture2D GameOver { get; set; }
         public Texture2D Congrats { get; set; }
-        public Dictionary<Actions, Texture2D> Dialogs { get; set; }
-        public Dictionary<Actions, Texture2D> SelectedDialogs { get; set; }
+        public Dictionary<Actions, Texture2D> Dialogs { get; private set; }
+        public Dictionary<Actions, Texture2D> SelectedDialogs { get; private set; }
         private Level[] levels;
         private Level currentLevel;
         private UIContainer mainMenu;
@@ -88,7 +91,6 @@ namespace MizJam1
             GameState = GameStates.MainMenu;
             Dialogs = new Dictionary<Actions, Texture2D>();
             SelectedDialogs = new Dictionary<Actions, Texture2D>();
-
         }
 
         public GameStates GameState { get; set; }
@@ -157,6 +159,15 @@ namespace MizJam1
             TheirTurn = Content.Load<Texture2D>("Textures/TheirTurnBanner");
             GameOver = Content.Load<Texture2D>("Textures/GameOverBanner");
             Congrats = Content.Load<Texture2D>("Textures/CongratulationsBanner");
+            AudioManager.Instance.AddSoundEffect("DiceShake", Content.Load<SoundEffect>("Audio/dieShuffle2"));
+            AudioManager.Instance.AddSoundEffect("DiceThrow", Content.Load<SoundEffect>("Audio/diceThrow3"));
+            AudioManager.Instance.AddSoundEffect("Hit", Content.Load<SoundEffect>("Audio/footstep_snow_000"));
+            AudioManager.Instance.AddSoundEffect("MenuClick", Content.Load<SoundEffect>("Audio/back_003"));
+            AudioManager.Instance.AddSoundEffect("Defend", Content.Load<SoundEffect>("Audio/impactMining_003"));
+            AudioManager.Instance.AddSoundEffect("Miss", Content.Load<SoundEffect>("Audio/footstep_carpet_001"));
+            AudioManager.Instance.AddSoundEffect("Walk", Content.Load<SoundEffect>("Audio/footstep_snow_001"));
+            AudioManager.Instance.AddSoundEffect("Death", Content.Load<SoundEffect>("Audio/select_006"));
+            AudioManager.Instance.AddSong("Song", Content.Load<Song>("Audio/2019-12-09_-_Retro_Forest_-_David_Fesliyan"));
 
             string[] levelFiles = Directory.GetFiles("Content/Levels");
             levels = new Level[levelFiles.Length];
@@ -192,12 +203,15 @@ namespace MizJam1
 
             mainMenu.AddChild(menu);
 
-            string message = "MADE BY TOURMI\nFOR MIZ GAME JAM 1";
+            string message = "MADE BY TOURMI\nFOR MIZ GAME JAM 1\nAUDIO ASSETS FROM KENNEY.NL\nSONG RETRO FOREST BY DAVID FESLIYAN";
             bottomLabel = new UILabel(message, mizjamSmallFont, Global.Colors.Main1);
-            bottomLabel.Position = new Point(800, 1000);
+            bottomLabel.Position = new Point(50, 900);
             string titleText = "ROLL AND DICE";
             title = new UILabel(titleText, mizjamHugeFont, Global.Colors.Main1);
             title.Position = new Point((1920 - mizjamHugeFont.MeasureString(titleText).ToPoint().X) / 2, 50);
+            AudioManager.Instance.SetMusicVolume(0.5f);
+            AudioManager.Instance.SetSoundEffectVolume(1f);
+            AudioManager.Instance.PlaySong("Song");
         }
 
         public void RestartLevel()

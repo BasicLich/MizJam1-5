@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MizJam1.Audio;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -14,6 +15,8 @@ namespace MizJam1.Animations
 
         const float time = 1f;
         private float currTime;
+
+        bool played = false;
 
         public DefendAnimation(Texture2D texture, Point position, Rectangle sourceRectangle)
         {
@@ -36,6 +39,12 @@ namespace MizJam1.Animations
 
         public void Update(GameTime gameTime)
         {
+            if (!played)
+            {
+                AudioManager.Instance.PlaySoundEffect("Defend", Vector2.Zero);
+                played = true;
+            }
+
             currTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
     }

@@ -11,6 +11,7 @@ using MizJam1.UIComponents;
 using MizJam1.UIComponents.Commands;
 using MizJam1.Animations;
 using MizJam1.Rendering;
+using MizJam1.Audio;
 
 namespace MizJam1.Levels
 {
@@ -440,7 +441,7 @@ namespace MizJam1.Levels
 
             if (unitPos != destination)
             {
-                float length = 0.05f * MathExtensions.CellDistance(unitPos, destination);
+                float length = 0.07f * MathExtensions.CellDistance(unitPos, destination);
                 animationQueue.Add(new MoveAnimation(CellToWorld(unitPos).Add(1), CellToWorld(destination).Add(1), unit.GetSprite(game.Textures), length), unit);
 
                 units[unitPos.Y, unitPos.X] = null;
@@ -494,7 +495,11 @@ namespace MizJam1.Levels
 
             int defense = baseDef + diceResult;
 
+
             int res = Math.Max(0, damage - defense);
+
+            animationQueue.Add(new AttackAnimation((ushort)res), null);
+
             if (def.Health <= res)
             {
                 Sprite skull = new Sprite(game.Textures[3], Global.SpriteSize, TextureIDInterpreter.GetSourceRectangle(567), Global.Colors.Main1);

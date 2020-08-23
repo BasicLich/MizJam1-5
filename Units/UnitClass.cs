@@ -23,7 +23,7 @@ namespace MizJam1.Units
                 [Attack] = 3,
                 [Magic] = 0,
                 [Stats.Range] = 0,
-                [Speed] = 4
+                [Speed] = 3
             }),
             ["Ranger"] = new UnitClass("Ranger", (Attack, Stats.Range), new Dictionary<Stats, ushort>()
             {
@@ -52,7 +52,6 @@ namespace MizJam1.Units
             ["King"] = new UnitClass("King", (Attack, Magic), new Dictionary<Stats, ushort>()
             {
                 [MaxHealth] = 50,
-                [Attack] = 4,
                 [Defense] = 1,
                 [MagicDefense] = 1,
                 [Speed] = 6,

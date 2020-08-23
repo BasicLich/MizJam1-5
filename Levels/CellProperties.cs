@@ -105,6 +105,7 @@ namespace MizJam1.Levels
             {
                 cellProperties[i] = solidTile;
             }
+            cellProperties[386] = rougherTerrain;
             cellProperties[401] = solidTile;
 
             cellProperties[433] = solidTile;
@@ -157,6 +158,7 @@ namespace MizJam1.Levels
             {
                 cellProperties[i] = solidTile;
             }
+            cellProperties[629] = regularTile;
             for (uint i = 638; i <= 648; i++)
             {
                 cellProperties[i] = solidTile;
@@ -179,6 +181,9 @@ namespace MizJam1.Levels
             }
 
             cellProperties[723] = rougherTerrain;
+            cellProperties[724] = solidTile;
+            cellProperties[725] = solidTile;
+            cellProperties[726] = solidTile;
             cellProperties[727] = solidTile;
             cellProperties[728] = solidTile;
             cellProperties[729] = solidTile;

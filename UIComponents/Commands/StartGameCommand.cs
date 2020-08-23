@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using MizJam1.Audio;
+using System;
 namespace MizJam1.UIComponents.Commands
 {
     public class StartGameCommand : ICommand
@@ -14,6 +16,7 @@ namespace MizJam1.UIComponents.Commands
         /// </summary>
         public void Execute()
         {
+            AudioManager.Instance.PlaySoundEffect("MenuClick", Vector2.Zero);
             game.GameState = MizJam1Game.GameStates.Playing;
         }
     }

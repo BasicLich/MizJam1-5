@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MizJam1.Audio;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -21,6 +22,9 @@ namespace MizJam1.Animations
         float changeDiceTime;
         int currDiceValue;
         int lastDiceValue;
+
+        bool playedShakeSound = false;
+        bool playedThrowSound = false;
 
         public RollDiceAnimation(Texture2D dice, Point position, ushort result, ushort staticValue, bool fullDice = false)
         {
@@ -51,9 +55,15 @@ namespace MizJam1.Animations
 
         public void Update(GameTime gameTime)
         {
+            
             currTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (currTime < time *0.75)
             {
+                if (!playedShakeSound)
+                {
+                    AudioManager.Instance.PlaySoundEffect("DiceShake", Vector2.Zero);
+                    playedShakeSound = true;
+                }
                 changeDiceTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (changeDiceTime >= 0.15f)
                 {
@@ -68,6 +78,11 @@ namespace MizJam1.Animations
             }
             else
             {
+                if (!playedThrowSound)
+                {
+                    AudioManager.Instance.PlaySoundEffect("DiceThrow", Vector2.Zero);
+                    playedThrowSound = true;
+                }
                 currDiceValue = result - 1;
             }
         }

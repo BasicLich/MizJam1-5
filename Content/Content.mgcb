@@ -13,6 +13,60 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Audio/2019-12-09_-_Retro_Forest_-_David_Fesliyan.ogg
+/importer:OggImporter
+/processor:SongProcessor
+/processorParam:Quality=Best
+/build:Audio/2019-12-09_-_Retro_Forest_-_David_Fesliyan.ogg
+
+#begin Audio/back_003.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Low
+/build:Audio/back_003.ogg
+
+#begin Audio/diceThrow3.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Low
+/build:Audio/diceThrow3.ogg
+
+#begin Audio/dieShuffle2.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Low
+/build:Audio/dieShuffle2.ogg
+
+#begin Audio/footstep_carpet_001.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/footstep_carpet_001.ogg
+
+#begin Audio/footstep_snow_000.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Low
+/build:Audio/footstep_snow_000.ogg
+
+#begin Audio/footstep_snow_001.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/footstep_snow_001.ogg
+
+#begin Audio/impactMining_003.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/impactMining_003.ogg
+
+#begin Audio/select_006.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/select_006.ogg
+
 #begin colored_packed.png
 /importer:TextureImporter
 /processor:TextureProcessor

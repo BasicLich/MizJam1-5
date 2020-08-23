@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MizJam1.Audio;
 using MizJam1.Rendering;
 using System;
 using System.Collections.Generic;
@@ -16,6 +17,8 @@ namespace MizJam1.Animations
 
         const float time = 1f;
         private float currentTime;
+
+        private bool played = false;
 
         public DeathAnimation(Point position, Sprite sprite, Point skullPos, Sprite skull)
         {
@@ -42,6 +45,11 @@ namespace MizJam1.Animations
 
         public void Update(GameTime gameTime)
         {
+            if (!played)
+            {
+                AudioManager.Instance.PlaySoundEffect("Death", Vector2.Zero);
+                played = true;
+            }
             currentTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
     }
