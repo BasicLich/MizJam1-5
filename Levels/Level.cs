@@ -12,6 +12,7 @@ using MizJam1.UIComponents.Commands;
 using MizJam1.Animations;
 using MizJam1.Rendering;
 using MizJam1.Audio;
+using System.Globalization;
 
 namespace MizJam1.Levels
 {
@@ -102,7 +103,7 @@ namespace MizJam1.Levels
             {
                 foreach (var obj in playerGroup.Elements("object"))
                 {
-                    Point pos = new Point((int)float.Parse(obj.Attribute("x").Value) / Global.SpriteWidth, (int)float.Parse(obj.Attribute("y").Value) / Global.SpriteHeight);
+                    Point pos = new Point((int)float.Parse(obj.Attribute("x").Value, CultureInfo.InvariantCulture.NumberFormat) / Global.SpriteWidth, (int)float.Parse(obj.Attribute("y").Value, CultureInfo.InvariantCulture.NumberFormat) / Global.SpriteHeight);
                     Unit unit = new Unit(uint.Parse(obj.Attribute("gid").Value), obj.Attribute("name").Value, UnitClass.UnitClasses[obj.Attribute("type").Value], false);
                     unit.Position = pos;
                     units[pos.Y, pos.X] = unit;
@@ -114,7 +115,7 @@ namespace MizJam1.Levels
             {
                 foreach (var obj in enemyGroup.Elements("object"))
                 {
-                    Point pos = new Point((int)float.Parse(obj.Attribute("x").Value) / Global.SpriteWidth, (int)float.Parse(obj.Attribute("y").Value) / Global.SpriteHeight);
+                    Point pos = new Point((int)float.Parse(obj.Attribute("x").Value, CultureInfo.InvariantCulture.NumberFormat) / Global.SpriteWidth, (int)float.Parse(obj.Attribute("y").Value, CultureInfo.InvariantCulture.NumberFormat) / Global.SpriteHeight);
                     Unit unit = new Unit(uint.Parse(obj.Attribute("gid").Value), obj.Attribute("name").Value, UnitClass.UnitClasses[obj.Attribute("type").Value], true);
                     unit.Position = pos;
                     units[pos.Y, pos.X] = unit;
